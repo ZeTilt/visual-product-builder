@@ -5,15 +5,17 @@
     'use strict';
 
     // Element modal (initialized after DOM ready)
-    let modal, form;
+    let modal, form, bulkModal;
 
     // Initialize
     $(document).ready(function() {
         // Cache DOM elements after DOM is ready
         modal = $('#vpb-element-modal');
         form = $('#vpb-element-form');
+        bulkModal = $('#vpb-bulk-price-modal');
 
         bindEvents();
+        bindBulkEvents();
     });
 
     /**
@@ -198,7 +200,7 @@
         const status = $('#vpb-import-status');
 
         button.prop('disabled', true);
-        status.text('Importing...');
+        status.text('Import en cours...');
 
         $.post(vpbAdmin.ajaxUrl, {
             action: 'vpb_import_sample_data',
@@ -218,6 +220,112 @@
         }).fail(function() {
             button.prop('disabled', false);
             status.text(vpbAdmin.i18n.error);
+        });
+    }
+
+    /**
+     * Bind bulk action events
+     */
+    function bindBulkEvents() {
+        // Select all checkbox
+        $('#vpb-select-all').on('change', function() {
+            const checked = $(this).is(':checked');
+            $('.vpb-element-checkbox').prop('checked', checked);
+            updateBulkActionsBar();
+        });
+
+        // Individual checkboxes
+        $(document).on('change', '.vpb-element-checkbox', function() {
+            updateBulkActionsBar();
+            // Update select all checkbox state
+            const total = $('.vpb-element-checkbox').length;
+            const selected = $('.vpb-element-checkbox:checked').length;
+            $('#vpb-select-all').prop('checked', total === selected);
+        });
+
+        // Deselect all
+        $('#vpb-bulk-deselect').on('click', function() {
+            $('.vpb-element-checkbox, #vpb-select-all').prop('checked', false);
+            updateBulkActionsBar();
+        });
+
+        // Open bulk price modal
+        $('#vpb-bulk-price').on('click', function() {
+            const selected = getSelectedIds();
+            if (selected.length === 0) return;
+
+            $('.vpb-bulk-info').text(selected.length + ' élément(s) sélectionné(s)');
+            $('#vpb-bulk-price-value').val('0');
+            $('input[name="price_mode"][value="set"]').prop('checked', true);
+            bulkModal.show();
+        });
+
+        // Close bulk modal
+        bulkModal.find('.vpb-modal-close').on('click', function() {
+            bulkModal.hide();
+        });
+
+        // Close modal on overlay click
+        bulkModal.on('click', function(e) {
+            if (e.target === this) bulkModal.hide();
+        });
+
+        // Submit bulk price form
+        $('#vpb-bulk-price-form').on('submit', function(e) {
+            e.preventDefault();
+            applyBulkPrice();
+        });
+    }
+
+    /**
+     * Update bulk actions bar visibility
+     */
+    function updateBulkActionsBar() {
+        const selected = $('.vpb-element-checkbox:checked').length;
+        const bulkBar = $('.vpb-bulk-actions');
+
+        if (selected > 0) {
+            bulkBar.show();
+            $('.vpb-selected-count').text(selected + ' sélectionné(s)');
+        } else {
+            bulkBar.hide();
+        }
+    }
+
+    /**
+     * Get selected element IDs
+     */
+    function getSelectedIds() {
+        return $('.vpb-element-checkbox:checked').map(function() {
+            return $(this).val();
+        }).get();
+    }
+
+    /**
+     * Apply bulk price change
+     */
+    function applyBulkPrice() {
+        const ids = getSelectedIds();
+        const price = parseFloat($('#vpb-bulk-price-value').val()) || 0;
+        const mode = $('input[name="price_mode"]:checked').val();
+
+        if (ids.length === 0) return;
+
+        $.post(vpbAdmin.ajaxUrl, {
+            action: 'vpb_bulk_update_price',
+            nonce: vpbAdmin.nonce,
+            ids: ids,
+            price: price,
+            mode: mode
+        }, function(response) {
+            if (response.success) {
+                alert(response.data.message);
+                location.reload();
+            } else {
+                alert(response.data.message || vpbAdmin.i18n.error);
+            }
+        }).fail(function() {
+            alert(vpbAdmin.i18n.error);
         });
     }
 

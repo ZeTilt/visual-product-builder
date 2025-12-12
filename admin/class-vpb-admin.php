@@ -21,6 +21,7 @@ class VPB_Admin {
         add_action( 'wp_ajax_vpb_save_element', array( $this, 'ajax_save_element' ) );
         add_action( 'wp_ajax_vpb_delete_element', array( $this, 'ajax_delete_element' ) );
         add_action( 'wp_ajax_vpb_import_sample_data', array( $this, 'ajax_import_sample_data' ) );
+        add_action( 'wp_ajax_vpb_bulk_update_price', array( $this, 'ajax_bulk_update_price' ) );
     }
 
     /**
@@ -211,6 +212,52 @@ class VPB_Admin {
         wp_send_json_success( array(
             'message'  => $imported . ' éléments importés avec succès',
             'imported' => $imported,
+        ) );
+    }
+
+    /**
+     * AJAX: Bulk update prices
+     */
+    public function ajax_bulk_update_price() {
+        check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+        }
+
+        $ids   = isset( $_POST['ids'] ) ? array_map( 'absint', (array) $_POST['ids'] ) : array();
+        $price = isset( $_POST['price'] ) ? floatval( $_POST['price'] ) : 0;
+        $mode  = isset( $_POST['mode'] ) ? sanitize_key( $_POST['mode'] ) : 'set';
+
+        if ( empty( $ids ) ) {
+            wp_send_json_error( array( 'message' => 'Aucun élément sélectionné' ) );
+        }
+
+        $updated = 0;
+
+        foreach ( $ids as $id ) {
+            $element = VPB_Library::get_element( $id );
+            if ( ! $element ) {
+                continue;
+            }
+
+            $new_price = $price;
+
+            if ( 'add' === $mode ) {
+                $new_price = floatval( $element['price'] ) + $price;
+            } elseif ( 'subtract' === $mode ) {
+                $new_price = max( 0, floatval( $element['price'] ) - $price );
+            }
+
+            $result = VPB_Library::update_element( $id, array( 'price' => $new_price ) );
+            if ( $result ) {
+                $updated++;
+            }
+        }
+
+        wp_send_json_success( array(
+            'message' => $updated . ' prix mis à jour',
+            'updated' => $updated,
         ) );
     }
 }

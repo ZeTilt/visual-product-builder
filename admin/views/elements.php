@@ -22,9 +22,23 @@ defined( 'ABSPATH' ) || exit;
                 Aucun élément trouvé. Cliquez sur "Ajouter un élément" pour créer votre premier élément.
             </p>
         <?php else : ?>
+            <!-- Barre d'actions en masse -->
+            <div class="vpb-bulk-actions" style="display: none;">
+                <span class="vpb-selected-count">0 sélectionné(s)</span>
+                <button type="button" class="button" id="vpb-bulk-price">
+                    Modifier le prix
+                </button>
+                <button type="button" class="button" id="vpb-bulk-deselect">
+                    Désélectionner tout
+                </button>
+            </div>
+
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="vpb-select-all" title="Tout sélectionner">
+                        </th>
                         <th style="width: 60px;">Aperçu</th>
                         <th>Nom</th>
                         <th>Catégorie</th>
@@ -36,7 +50,10 @@ defined( 'ABSPATH' ) || exit;
                 </thead>
                 <tbody>
                     <?php foreach ( $elements as $element ) : ?>
-                        <tr data-id="<?php echo esc_attr( $element['id'] ); ?>">
+                        <tr data-id="<?php echo esc_attr( $element['id'] ); ?>" data-price="<?php echo esc_attr( $element['price'] ); ?>">
+                            <td>
+                                <input type="checkbox" class="vpb-element-checkbox" value="<?php echo esc_attr( $element['id'] ); ?>">
+                            </td>
                             <td>
                                 <img src="<?php echo esc_url( $element['svg_file'] ); ?>"
                                      alt="<?php echo esc_attr( $element['name'] ); ?>"
@@ -45,7 +62,7 @@ defined( 'ABSPATH' ) || exit;
                             <td><strong><?php echo esc_html( $element['name'] ); ?></strong></td>
                             <td><?php echo esc_html( ucfirst( $element['category'] ) ); ?></td>
                             <td><?php echo esc_html( ucfirst( $element['color'] ) ); ?></td>
-                            <td><?php echo wc_price( $element['price'] ); ?></td>
+                            <td class="vpb-price-cell"><?php echo wc_price( $element['price'] ); ?></td>
                             <td>
                                 <?php if ( $element['active'] ) : ?>
                                     <span class="vpb-status vpb-status-active">Actif</span>
@@ -138,7 +155,75 @@ defined( 'ABSPATH' ) || exit;
     </div>
 </div>
 
+<!-- Modal Prix en masse -->
+<div id="vpb-bulk-price-modal" class="vpb-modal" style="display: none;">
+    <div class="vpb-modal-content" style="width: 400px;">
+        <div class="vpb-modal-header">
+            <h2>Modifier le prix</h2>
+            <button type="button" class="vpb-modal-close">&times;</button>
+        </div>
+        <form id="vpb-bulk-price-form">
+            <p class="vpb-bulk-info"></p>
+
+            <div class="vpb-form-row">
+                <label>
+                    <input type="radio" name="price_mode" value="set" checked>
+                    Définir le prix à
+                </label>
+                <div class="vpb-price-input-row">
+                    <input type="number" id="vpb-bulk-price-value" step="0.01" min="0" value="0"> €
+                </div>
+            </div>
+
+            <div class="vpb-form-row">
+                <label>
+                    <input type="radio" name="price_mode" value="add">
+                    Ajouter au prix actuel
+                </label>
+            </div>
+
+            <div class="vpb-form-row">
+                <label>
+                    <input type="radio" name="price_mode" value="subtract">
+                    Soustraire du prix actuel
+                </label>
+            </div>
+
+            <div class="vpb-form-actions">
+                <button type="button" class="button vpb-modal-close">Annuler</button>
+                <button type="submit" class="button button-primary">Appliquer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <style>
+.vpb-bulk-actions {
+    background: #f0f0f1;
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.vpb-selected-count {
+    font-weight: 600;
+    color: #2271b1;
+}
+.vpb-bulk-info {
+    background: #f0f6fc;
+    border-left: 4px solid #2271b1;
+    padding: 10px 15px;
+    margin: 0 0 15px 0;
+}
+.vpb-price-input-row {
+    margin-top: 5px;
+    margin-left: 24px;
+}
+.vpb-price-input-row input {
+    width: 100px;
+}
 .vpb-status {
     display: inline-block;
     padding: 2px 8px;
