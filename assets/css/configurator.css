@@ -1,0 +1,785 @@
+/**
+ * Visual Product Builder - Glassmorphism UI
+ * Modern glass-effect design with smooth animations
+ */
+
+/* CSS Variables */
+:root {
+    --vpb-glass-bg: rgba(255, 255, 255, 0.25);
+    --vpb-glass-bg-solid: rgba(255, 255, 255, 0.85);
+    --vpb-glass-border: rgba(255, 255, 255, 0.4);
+    --vpb-glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+    --vpb-blur: 12px;
+    --vpb-primary: #6366f1;
+    --vpb-primary-light: #818cf8;
+    --vpb-primary-dark: #4f46e5;
+    --vpb-accent: #ec4899;
+    --vpb-success: #10b981;
+    --vpb-warning: #f59e0b;
+    --vpb-danger: #ef4444;
+    --vpb-text: #1e293b;
+    --vpb-text-muted: #64748b;
+    --vpb-radius: 20px;
+    --vpb-radius-sm: 12px;
+    --vpb-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Background gradient for the page */
+.vpb-configurator {
+    --gradient-start: #e0e7ff;
+    --gradient-end: #fce7f3;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+    border-radius: var(--vpb-radius);
+    min-height: 600px;
+}
+
+/* Decorative blobs */
+.vpb-configurator::before,
+.vpb-configurator::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.6;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.vpb-configurator::before {
+    width: 300px;
+    height: 300px;
+    background: #c7d2fe;
+    top: -50px;
+    left: -50px;
+}
+
+.vpb-configurator::after {
+    width: 250px;
+    height: 250px;
+    background: #fbcfe8;
+    bottom: -30px;
+    right: -30px;
+}
+
+.vpb-configurator > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 768px) {
+    .vpb-configurator {
+        grid-template-columns: 1fr;
+        padding: 20px;
+        gap: 20px;
+    }
+}
+
+/* ============================================
+   PREVIEW SECTION - Glass Card
+   ============================================ */
+.vpb-preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.vpb-preview-container {
+    background: var(--vpb-glass-bg);
+    backdrop-filter: blur(var(--vpb-blur));
+    -webkit-backdrop-filter: blur(var(--vpb-blur));
+    border: 1px solid var(--vpb-glass-border);
+    border-radius: var(--vpb-radius);
+    padding: 40px;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--vpb-glass-shadow);
+    transition: var(--vpb-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.vpb-preview-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+}
+
+.vpb-preview-container:hover {
+    box-shadow: 0 12px 40px rgba(31, 38, 135, 0.2);
+    transform: translateY(-2px);
+}
+
+.vpb-preview-canvas {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px;
+    padding: 20px;
+}
+
+.vpb-preview-placeholder {
+    color: var(--vpb-text-muted);
+    font-style: italic;
+    text-align: center;
+    font-size: 15px;
+    opacity: 0.8;
+}
+
+.vpb-preview-element {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    animation: vpb-pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: var(--vpb-transition);
+}
+
+.vpb-preview-element img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.vpb-preview-element:hover {
+    transform: scale(1.15) rotate(-3deg);
+}
+
+@keyframes vpb-pop-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.5) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ============================================
+   CONTROLS - Glass Buttons
+   ============================================ */
+.vpb-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.vpb-btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: var(--vpb-radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--vpb-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.vpb-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.vpb-btn:hover::before {
+    left: 100%;
+}
+
+.vpb-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.vpb-btn-primary {
+    background: linear-gradient(135deg, var(--vpb-primary) 0%, var(--vpb-primary-dark) 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.vpb-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+}
+
+.vpb-btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.vpb-btn-secondary {
+    background: var(--vpb-glass-bg-solid);
+    backdrop-filter: blur(var(--vpb-blur));
+    color: var(--vpb-text);
+    border: 1px solid var(--vpb-glass-border);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.vpb-btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   CONFIG SECTION
+   ============================================ */
+.vpb-config-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* ============================================
+   STATUS BAR - Glass Style
+   ============================================ */
+.vpb-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    background: var(--vpb-glass-bg-solid);
+    backdrop-filter: blur(var(--vpb-blur));
+    border: 1px solid var(--vpb-glass-border);
+    border-radius: var(--vpb-radius-sm);
+    box-shadow: var(--vpb-glass-shadow);
+}
+
+.vpb-counter {
+    color: var(--vpb-text);
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.vpb-counter #vpb-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--vpb-primary) 0%, var(--vpb-primary-dark) 100%);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    transition: var(--vpb-transition);
+}
+
+.vpb-counter-warning #vpb-count {
+    background: linear-gradient(135deg, var(--vpb-warning) 0%, #d97706 100%);
+    animation: vpb-pulse 1.5s infinite;
+}
+
+.vpb-counter-danger #vpb-count {
+    background: linear-gradient(135deg, var(--vpb-danger) 0%, #dc2626 100%);
+    animation: vpb-pulse 1s infinite;
+}
+
+@keyframes vpb-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.vpb-price-display {
+    color: var(--vpb-text);
+    font-size: 14px;
+}
+
+.vpb-price-display strong {
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--vpb-success) 0%, #059669 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ============================================
+   COLOR FILTER - Pill Tabs
+   ============================================ */
+.vpb-color-filter {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+}
+
+.vpb-filter-label {
+    font-weight: 600;
+    color: var(--vpb-text);
+    font-size: 14px;
+}
+
+.vpb-color-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vpb-color-tab {
+    padding: 10px 20px;
+    border: 1px solid var(--vpb-glass-border);
+    border-radius: 50px;
+    background: var(--vpb-glass-bg-solid);
+    backdrop-filter: blur(var(--vpb-blur));
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vpb-text-muted);
+    cursor: pointer;
+    transition: var(--vpb-transition);
+    text-transform: capitalize;
+}
+
+.vpb-color-tab:hover {
+    background: rgba(255, 255, 255, 1);
+    color: var(--vpb-primary);
+    border-color: var(--vpb-primary-light);
+    transform: translateY(-1px);
+}
+
+.vpb-color-tab.active {
+    background: linear-gradient(135deg, var(--vpb-primary) 0%, var(--vpb-primary-dark) 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* ============================================
+   ELEMENTS CONTAINER - Glass Card
+   ============================================ */
+.vpb-elements-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 16px;
+    background: var(--vpb-glass-bg-solid);
+    backdrop-filter: blur(var(--vpb-blur));
+    border: 1px solid var(--vpb-glass-border);
+    border-radius: var(--vpb-radius);
+    box-shadow: var(--vpb-glass-shadow);
+}
+
+.vpb-elements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 12px;
+    padding: 8px;
+}
+
+/* ============================================
+   ELEMENT BUTTONS - Glass Cards
+   ============================================ */
+.vpb-element-btn {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    padding: 12px;
+    border: 1px solid var(--vpb-glass-border);
+    border-radius: var(--vpb-radius-sm);
+    background: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: var(--vpb-transition);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.vpb-element-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+    opacity: 0;
+    transition: var(--vpb-transition);
+}
+
+.vpb-element-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: var(--vpb-primary-light);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.2);
+}
+
+.vpb-element-btn:hover::before {
+    opacity: 1;
+}
+
+.vpb-element-btn:active {
+    transform: translateY(-2px) scale(0.98);
+}
+
+.vpb-element-btn img {
+    max-width: 75%;
+    max-height: 65%;
+    object-fit: contain;
+    position: relative;
+    z-index: 1;
+    transition: var(--vpb-transition);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.vpb-element-btn:hover img {
+    transform: scale(1.1);
+}
+
+.vpb-element-btn.hidden {
+    display: none;
+}
+
+.vpb-element-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--vpb-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 1;
+}
+
+.vpb-element-price {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: linear-gradient(135deg, var(--vpb-success) 0%, #059669 100%);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    z-index: 2;
+}
+
+/* ============================================
+   ADD TO CART - Hero Button
+   ============================================ */
+.vpb-add-to-cart {
+    width: 100%;
+    padding: 20px 32px;
+    font-size: 17px;
+    margin-top: 10px;
+    background: linear-gradient(135deg, var(--vpb-primary) 0%, var(--vpb-accent) 100%);
+    border: none;
+    border-radius: var(--vpb-radius-sm);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--vpb-transition);
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.vpb-add-to-cart::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.vpb-add-to-cart:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.vpb-add-to-cart:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+}
+
+.vpb-add-to-cart:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.vpb-add-to-cart:disabled {
+    background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.vpb-add-to-cart #vpb-cart-price {
+    font-size: 18px;
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS - Glass Style
+   ============================================ */
+#vpb-toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.vpb-toast {
+    padding: 16px 24px;
+    border-radius: var(--vpb-radius-sm);
+    background: var(--vpb-glass-bg-solid);
+    backdrop-filter: blur(20px);
+    color: var(--vpb-text);
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateX(100%) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 320px;
+    border: 1px solid var(--vpb-glass-border);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vpb-toast::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.vpb-toast.show {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+.vpb-toast-success::before {
+    background: var(--vpb-success);
+    box-shadow: 0 0 10px var(--vpb-success);
+}
+
+.vpb-toast-warning::before {
+    background: var(--vpb-warning);
+    box-shadow: 0 0 10px var(--vpb-warning);
+}
+
+.vpb-toast-error::before {
+    background: var(--vpb-danger);
+    box-shadow: 0 0 10px var(--vpb-danger);
+}
+
+.vpb-toast-info::before {
+    background: var(--vpb-primary);
+    box-shadow: 0 0 10px var(--vpb-primary);
+}
+
+/* ============================================
+   CONFIRM DIALOG - Glass Modal
+   ============================================ */
+.vpb-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    z-index: 99998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    animation: vpb-fade-in 0.3s ease;
+}
+
+@keyframes vpb-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.vpb-confirm-dialog {
+    background: var(--vpb-glass-bg-solid);
+    backdrop-filter: blur(20px);
+    padding: 36px;
+    border-radius: var(--vpb-radius);
+    text-align: center;
+    max-width: 400px;
+    border: 1px solid var(--vpb-glass-border);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    animation: vpb-slide-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes vpb-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.vpb-confirm-dialog p {
+    margin: 0 0 28px 0;
+    font-size: 16px;
+    color: var(--vpb-text);
+    line-height: 1.6;
+}
+
+.vpb-confirm-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+}
+
+/* ============================================
+   SCROLLBAR - Custom Style
+   ============================================ */
+.vpb-elements-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.vpb-elements-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+.vpb-elements-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--vpb-primary-light) 0%, var(--vpb-primary) 100%);
+    border-radius: 4px;
+}
+
+.vpb-elements-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--vpb-primary) 0%, var(--vpb-primary-dark) 100%);
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 768px) {
+    .vpb-preview-container {
+        min-height: 200px;
+        padding: 24px;
+    }
+
+    .vpb-preview-element {
+        width: 55px;
+        height: 55px;
+    }
+
+    .vpb-status-bar {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .vpb-color-filter {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .vpb-elements-grid {
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 10px;
+    }
+
+    .vpb-add-to-cart {
+        padding: 18px 24px;
+        font-size: 16px;
+    }
+
+    #vpb-toast-container {
+        top: auto;
+        bottom: 20px;
+        right: 20px;
+        left: 20px;
+    }
+
+    .vpb-toast {
+        max-width: none;
+    }
+}
+
+/* ============================================
+   ANIMATIONS EXTRAS
+   ============================================ */
+
+/* Shake animation for limit reached */
+@keyframes vpb-shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.vpb-shake {
+    animation: vpb-shake 0.6s ease-in-out;
+}
+
+/* Success burst animation */
+@keyframes vpb-burst {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.vpb-burst {
+    animation: vpb-burst 0.3s ease;
+}
+
+/* Floating animation for preview elements */
+@keyframes vpb-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.vpb-preview-element:nth-child(odd) {
+    animation: vpb-float 3s ease-in-out infinite;
+}
+
+.vpb-preview-element:nth-child(even) {
+    animation: vpb-float 3s ease-in-out infinite 0.5s;
+}
+
+/* Loading state */
+.vpb-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.vpb-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+}

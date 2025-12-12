@@ -1,0 +1,23 @@
+/**
+ * Visual Product Builder - Admin Styles
+ */
+
+.vpb-admin-header {
+    margin: 20px 0;
+}
+
+.vpb-admin-content {
+    margin-top: 20px;
+}
+
+/* Element list improvements */
+.vpb-elements-grid .wp-list-table img {
+    display: block;
+}
+
+/* Responsive table */
+@media screen and (max-width: 782px) {
+    .vpb-elements-grid .wp-list-table td {
+        padding: 8px;
+    }
+}
