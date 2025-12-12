@@ -28,8 +28,8 @@ class VPB_Admin {
      */
     public function add_menu_pages() {
         add_menu_page(
-            __( 'Visual Product Builder', 'visual-product-builder' ),
-            __( 'VPB', 'visual-product-builder' ),
+            'Visual Product Builder',
+            'VPB',
             'manage_woocommerce',
             'vpb-settings',
             array( $this, 'render_settings_page' ),
@@ -39,8 +39,8 @@ class VPB_Admin {
 
         add_submenu_page(
             'vpb-settings',
-            __( 'Element Library', 'visual-product-builder' ),
-            __( 'Elements', 'visual-product-builder' ),
+            'Bibliothèque d\'éléments',
+            'Éléments',
             'manage_woocommerce',
             'vpb-elements',
             array( $this, 'render_elements_page' )
@@ -48,8 +48,8 @@ class VPB_Admin {
 
         add_submenu_page(
             'vpb-settings',
-            __( 'Settings', 'visual-product-builder' ),
-            __( 'Settings', 'visual-product-builder' ),
+            'Réglages',
+            'Réglages',
             'manage_woocommerce',
             'vpb-settings',
             array( $this, 'render_settings_page' )
@@ -87,11 +87,11 @@ class VPB_Admin {
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'vpb_admin_nonce' ),
             'i18n'    => array(
-                'confirmDelete' => __( 'Are you sure you want to delete this element?', 'visual-product-builder' ),
-                'saved'         => __( 'Saved successfully', 'visual-product-builder' ),
-                'error'         => __( 'An error occurred', 'visual-product-builder' ),
-                'selectImage'   => __( 'Select SVG Image', 'visual-product-builder' ),
-                'useImage'      => __( 'Use this image', 'visual-product-builder' ),
+                'confirmDelete' => 'Voulez-vous vraiment supprimer cet élément ?',
+                'saved'         => 'Enregistré avec succès',
+                'error'         => 'Une erreur est survenue',
+                'selectImage'   => 'Sélectionner une image',
+                'useImage'      => 'Utiliser cette image',
             ),
         ) );
     }
@@ -101,7 +101,7 @@ class VPB_Admin {
      */
     public function render_settings_page() {
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_die( esc_html__( 'You do not have permission to access this page.', 'visual-product-builder' ) );
+            wp_die( 'Vous n\'avez pas la permission d\'accéder à cette page.' );
         }
 
         include VPB_PLUGIN_DIR . 'admin/views/settings.php';
@@ -112,7 +112,7 @@ class VPB_Admin {
      */
     public function render_elements_page() {
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_die( esc_html__( 'You do not have permission to access this page.', 'visual-product-builder' ) );
+            wp_die( 'Vous n\'avez pas la permission d\'accéder à cette page.' );
         }
 
         $elements = VPB_Library::get_elements();
@@ -127,7 +127,7 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
+            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
         }
 
         $id   = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
@@ -144,7 +144,7 @@ class VPB_Admin {
 
         // Validate required fields
         if ( empty( $data['name'] ) || empty( $data['svg_file'] ) ) {
-            wp_send_json_error( array( 'message' => __( 'Name and SVG file are required', 'visual-product-builder' ) ) );
+            wp_send_json_error( array( 'message' => 'Le nom et l\'image sont requis' ) );
         }
 
         // Auto-generate slug if empty
@@ -163,11 +163,11 @@ class VPB_Admin {
 
         if ( $result ) {
             wp_send_json_success( array(
-                'message' => __( 'Element saved', 'visual-product-builder' ),
+                'message' => 'Élément enregistré',
                 'id'      => $id,
             ) );
         } else {
-            wp_send_json_error( array( 'message' => __( 'Failed to save element', 'visual-product-builder' ) ) );
+            wp_send_json_error( array( 'message' => 'Échec de l\'enregistrement' ) );
         }
     }
 
@@ -178,21 +178,21 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
+            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
         }
 
         $id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
 
         if ( ! $id ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid element ID', 'visual-product-builder' ) ) );
+            wp_send_json_error( array( 'message' => 'ID d\'élément invalide' ) );
         }
 
         $result = VPB_Library::delete_element( $id );
 
         if ( $result ) {
-            wp_send_json_success( array( 'message' => __( 'Element deleted', 'visual-product-builder' ) ) );
+            wp_send_json_success( array( 'message' => 'Élément supprimé' ) );
         } else {
-            wp_send_json_error( array( 'message' => __( 'Failed to delete element', 'visual-product-builder' ) ) );
+            wp_send_json_error( array( 'message' => 'Échec de la suppression' ) );
         }
     }
 
@@ -203,13 +203,13 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
+            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
         }
 
         $imported = VPB_Sample_Data::import();
 
         wp_send_json_success( array(
-            'message'  => sprintf( __( '%d elements imported successfully', 'visual-product-builder' ), $imported ),
+            'message'  => $imported . ' éléments importés avec succès',
             'imported' => $imported,
         ) );
     }

@@ -44,7 +44,7 @@ function vpb_check_woocommerce() {
 function vpb_woocommerce_missing_notice() {
     ?>
     <div class="notice notice-error">
-        <p><?php esc_html_e( 'Visual Product Builder requires WooCommerce to be installed and active.', 'visual-product-builder' ); ?></p>
+        <p>Visual Product Builder nécessite que WooCommerce soit installé et activé.</p>
     </div>
     <?php
 }
@@ -152,7 +152,7 @@ add_action( 'after_setup_theme', 'vpb_register_image_sizes' );
  */
 function vpb_add_image_size_names( $sizes ) {
     return array_merge( $sizes, array(
-        'vpb-element' => __( 'VPB Element (100x100)', 'visual-product-builder' ),
+        'vpb-element' => 'VPB Élément (100x100)',
     ) );
 }
 add_filter( 'image_size_names_choose', 'vpb_add_image_size_names' );
@@ -185,11 +185,11 @@ function vpb_enqueue_assets() {
         'nonce'     => wp_create_nonce( 'vpb_nonce' ),
         'pluginUrl' => VPB_PLUGIN_URL,
         'i18n'      => array(
-            'addedToCart'    => __( 'Added to cart', 'visual-product-builder' ),
-            'undone'         => __( 'Action undone', 'visual-product-builder' ),
-            'limitReached'   => __( 'Element limit reached', 'visual-product-builder' ),
-            'confirmReset'   => __( 'Are you sure you want to start over?', 'visual-product-builder' ),
-            'elementAdded'   => __( 'Element added', 'visual-product-builder' ),
+            'addedToCart'    => 'Ajouté au panier',
+            'undone'         => 'Action annulée',
+            'limitReached'   => 'Limite atteinte !',
+            'confirmReset'   => 'Voulez-vous vraiment recommencer ?',
+            'elementAdded'   => 'Élément ajouté !',
         ),
     ) );
 }

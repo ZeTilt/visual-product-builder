@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin Elements Library Page
+ * Page Bibliothèque d'éléments Admin
  *
  * @package VisualProductBuilder
  */
@@ -10,28 +10,28 @@ defined( 'ABSPATH' ) || exit;
 
 <div class="wrap">
     <h1>
-        <?php esc_html_e( 'Element Library', 'visual-product-builder' ); ?>
+        Bibliothèque d'éléments
         <button type="button" class="page-title-action" id="vpb-add-element">
-            <?php esc_html_e( 'Add Element', 'visual-product-builder' ); ?>
+            Ajouter un élément
         </button>
     </h1>
 
     <div class="vpb-elements-grid">
         <?php if ( empty( $elements ) ) : ?>
             <p class="vpb-no-elements">
-                <?php esc_html_e( 'No elements found. Click "Add Element" to create your first element.', 'visual-product-builder' ); ?>
+                Aucun élément trouvé. Cliquez sur "Ajouter un élément" pour créer votre premier élément.
             </p>
         <?php else : ?>
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th style="width: 60px;"><?php esc_html_e( 'Preview', 'visual-product-builder' ); ?></th>
-                        <th><?php esc_html_e( 'Name', 'visual-product-builder' ); ?></th>
-                        <th><?php esc_html_e( 'Category', 'visual-product-builder' ); ?></th>
-                        <th><?php esc_html_e( 'Color', 'visual-product-builder' ); ?></th>
-                        <th><?php esc_html_e( 'Price', 'visual-product-builder' ); ?></th>
-                        <th><?php esc_html_e( 'Status', 'visual-product-builder' ); ?></th>
-                        <th style="width: 100px;"><?php esc_html_e( 'Actions', 'visual-product-builder' ); ?></th>
+                        <th style="width: 60px;">Aperçu</th>
+                        <th>Nom</th>
+                        <th>Catégorie</th>
+                        <th>Couleur</th>
+                        <th>Prix</th>
+                        <th>Statut</th>
+                        <th style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,21 +44,21 @@ defined( 'ABSPATH' ) || exit;
                             </td>
                             <td><strong><?php echo esc_html( $element['name'] ); ?></strong></td>
                             <td><?php echo esc_html( ucfirst( $element['category'] ) ); ?></td>
-                            <td><?php echo esc_html( $element['color'] ); ?></td>
+                            <td><?php echo esc_html( ucfirst( $element['color'] ) ); ?></td>
                             <td><?php echo wc_price( $element['price'] ); ?></td>
                             <td>
                                 <?php if ( $element['active'] ) : ?>
-                                    <span class="vpb-status vpb-status-active"><?php esc_html_e( 'Active', 'visual-product-builder' ); ?></span>
+                                    <span class="vpb-status vpb-status-active">Actif</span>
                                 <?php else : ?>
-                                    <span class="vpb-status vpb-status-inactive"><?php esc_html_e( 'Inactive', 'visual-product-builder' ); ?></span>
+                                    <span class="vpb-status vpb-status-inactive">Inactif</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <button type="button" class="button vpb-edit-element" data-id="<?php echo esc_attr( $element['id'] ); ?>">
-                                    <?php esc_html_e( 'Edit', 'visual-product-builder' ); ?>
+                                    Modifier
                                 </button>
                                 <button type="button" class="button vpb-delete-element" data-id="<?php echo esc_attr( $element['id'] ); ?>">
-                                    <?php esc_html_e( 'Delete', 'visual-product-builder' ); ?>
+                                    Suppr.
                                 </button>
                             </td>
                         </tr>
@@ -69,70 +69,70 @@ defined( 'ABSPATH' ) || exit;
     </div>
 </div>
 
-<!-- Element Modal -->
+<!-- Modal Élément -->
 <div id="vpb-element-modal" class="vpb-modal" style="display: none;">
     <div class="vpb-modal-content">
         <div class="vpb-modal-header">
-            <h2 id="vpb-modal-title"><?php esc_html_e( 'Add Element', 'visual-product-builder' ); ?></h2>
+            <h2 id="vpb-modal-title">Ajouter un élément</h2>
             <button type="button" class="vpb-modal-close">&times;</button>
         </div>
         <form id="vpb-element-form">
             <input type="hidden" name="id" id="vpb-element-id" value="0">
 
             <div class="vpb-form-row">
-                <label for="vpb-element-name"><?php esc_html_e( 'Name', 'visual-product-builder' ); ?> *</label>
+                <label for="vpb-element-name">Nom *</label>
                 <input type="text" id="vpb-element-name" name="name" required>
             </div>
 
             <div class="vpb-form-row">
-                <label for="vpb-element-slug"><?php esc_html_e( 'Slug', 'visual-product-builder' ); ?></label>
-                <input type="text" id="vpb-element-slug" name="slug" placeholder="<?php esc_attr_e( 'Auto-generated from name', 'visual-product-builder' ); ?>">
+                <label for="vpb-element-slug">Slug</label>
+                <input type="text" id="vpb-element-slug" name="slug" placeholder="Généré automatiquement">
             </div>
 
             <div class="vpb-form-row">
-                <label for="vpb-element-category"><?php esc_html_e( 'Category', 'visual-product-builder' ); ?></label>
+                <label for="vpb-element-category">Catégorie</label>
                 <select id="vpb-element-category" name="category">
-                    <option value="letter"><?php esc_html_e( 'Letter', 'visual-product-builder' ); ?></option>
-                    <option value="number"><?php esc_html_e( 'Number', 'visual-product-builder' ); ?></option>
-                    <option value="shape"><?php esc_html_e( 'Shape', 'visual-product-builder' ); ?></option>
+                    <option value="letter">Lettre</option>
+                    <option value="number">Chiffre</option>
+                    <option value="shape">Forme</option>
                 </select>
             </div>
 
             <div class="vpb-form-row">
-                <label for="vpb-element-color"><?php esc_html_e( 'Color', 'visual-product-builder' ); ?></label>
-                <input type="text" id="vpb-element-color" name="color" placeholder="blue, red, pink...">
+                <label for="vpb-element-color">Couleur</label>
+                <input type="text" id="vpb-element-color" name="color" placeholder="bleu, rose, beige...">
             </div>
 
             <div class="vpb-form-row">
-                <label for="vpb-element-svg"><?php esc_html_e( 'Image', 'visual-product-builder' ); ?> *</label>
+                <label for="vpb-element-svg">Image *</label>
                 <div class="vpb-image-field">
                     <input type="text" id="vpb-element-svg" name="svg_file" required>
-                    <button type="button" class="button vpb-select-image"><?php esc_html_e( 'Select', 'visual-product-builder' ); ?></button>
+                    <button type="button" class="button vpb-select-image">Choisir</button>
                 </div>
-                <p class="description"><?php esc_html_e( 'PNG, JPG or SVG. Recommended size: 100x100px with transparent background.', 'visual-product-builder' ); ?></p>
+                <p class="description">PNG, JPG ou SVG. Taille recommandée : 100x100px avec fond transparent.</p>
                 <div id="vpb-svg-preview" class="vpb-image-preview"></div>
             </div>
 
             <div class="vpb-form-row">
-                <label for="vpb-element-price"><?php esc_html_e( 'Price', 'visual-product-builder' ); ?></label>
+                <label for="vpb-element-price">Prix (€)</label>
                 <input type="number" id="vpb-element-price" name="price" step="0.01" min="0" value="0">
             </div>
 
             <div class="vpb-form-row">
-                <label for="vpb-element-order"><?php esc_html_e( 'Sort Order', 'visual-product-builder' ); ?></label>
+                <label for="vpb-element-order">Ordre d'affichage</label>
                 <input type="number" id="vpb-element-order" name="sort_order" min="0" value="0">
             </div>
 
             <div class="vpb-form-row">
                 <label>
                     <input type="checkbox" id="vpb-element-active" name="active" checked>
-                    <?php esc_html_e( 'Active', 'visual-product-builder' ); ?>
+                    Actif
                 </label>
             </div>
 
             <div class="vpb-form-actions">
-                <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
-                <button type="submit" class="button button-primary"><?php esc_html_e( 'Save Element', 'visual-product-builder' ); ?></button>
+                <button type="button" class="button vpb-modal-close">Annuler</button>
+                <button type="submit" class="button button-primary">Enregistrer</button>
             </div>
         </form>
     </div>
