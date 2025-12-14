@@ -443,21 +443,12 @@ class VPB_Admin {
 
         $file = $_FILES['file'];
 
-        // Validate file type
-        $allowed_types = array( 'image/svg+xml' );
-        $finfo         = finfo_open( FILEINFO_MIME_TYPE );
-        $mime_type     = finfo_file( $finfo, $file['tmp_name'] );
-        finfo_close( $finfo );
-
-        // SVG might be detected as text/plain or application/xml
-        if ( ! in_array( $mime_type, array( 'image/svg+xml', 'text/plain', 'text/xml', 'application/xml' ), true ) ) {
-            wp_send_json_error( array( 'message' => 'Type de fichier non autorisé: ' . $mime_type ) );
-        }
-
-        // Check extension
+        // Allowed image extensions
+        $allowed_extensions = array( 'svg', 'png', 'jpg', 'jpeg', 'gif', 'webp' );
         $ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
-        if ( $ext !== 'svg' ) {
-            wp_send_json_error( array( 'message' => 'Extension non autorisée' ) );
+
+        if ( ! in_array( $ext, $allowed_extensions, true ) ) {
+            wp_send_json_error( array( 'message' => 'Extension non autorisée: ' . $ext ) );
         }
 
         // Get element name from filename (without extension)
@@ -486,14 +477,12 @@ class VPB_Admin {
 
         // Allow SVG uploads temporarily
         add_filter( 'upload_mimes', function( $mimes ) {
-            $mimes['svg'] = 'image/svg+xml';
+            $mimes['svg']  = 'image/svg+xml';
+            $mimes['webp'] = 'image/webp';
             return $mimes;
         } );
 
-        $upload_overrides = array(
-            'test_form' => false,
-            'mimes'     => array( 'svg' => 'image/svg+xml' ),
-        );
+        $upload_overrides = array( 'test_form' => false );
 
         $movefile = wp_handle_upload( $file, $upload_overrides );
 

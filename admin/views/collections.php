@@ -146,10 +146,10 @@ defined( 'ABSPATH' ) || exit;
 
             <div class="vpb-import-dropzone" id="vpb-dropzone">
                 <span class="dashicons dashicons-upload" style="font-size: 48px; width: 48px; height: 48px; color: #c3c4c7;"></span>
-                <p>Glissez-déposez vos fichiers SVG ici</p>
-                <p><small>ou</small></p>
+                <p>Glissez-déposez vos images ici</p>
+                <p><small>SVG, PNG, JPG, GIF, WebP</small></p>
                 <button type="button" class="button" id="vpb-select-files">Sélectionner des fichiers</button>
-                <input type="file" id="vpb-file-input" multiple accept=".svg" style="display: none;">
+                <input type="file" id="vpb-file-input" multiple accept=".svg,.png,.jpg,.jpeg,.gif,.webp" style="display: none;">
             </div>
 
             <div id="vpb-import-preview" class="vpb-import-preview" style="display: none;">
@@ -469,6 +469,15 @@ defined( 'ABSPATH' ) || exit;
     font-size: 13px;
 }
 
+.vpb-file-item .vpb-file-ext {
+    background: #f0f0f1;
+    color: #646970;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
 .vpb-file-item .vpb-remove-file {
     color: #b32d2e;
     cursor: pointer;
@@ -775,10 +784,14 @@ jQuery(document).ready(function($) {
     });
 
     // Add files to list
+    var allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+    var allowedExtensions = ['svg', 'png', 'jpg', 'jpeg', 'gif', 'webp'];
+
     function addFiles(files) {
         for (var i = 0; i < files.length; i++) {
             var file = files[i];
-            if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+            var ext = file.name.split('.').pop().toLowerCase();
+            if (allowedTypes.indexOf(file.type) !== -1 || allowedExtensions.indexOf(ext) !== -1) {
                 // Check if not already added
                 var exists = importFiles.some(function(f) { return f.name === file.name; });
                 if (!exists) {
@@ -807,10 +820,13 @@ jQuery(document).ready(function($) {
         $('#vpb-import-btn-count').text('(' + importFiles.length + ')');
 
         importFiles.forEach(function(file, index) {
-            var name = file.name.replace(/\.svg$/i, '');
+            var name = file.name.replace(/\.(svg|png|jpe?g|gif|webp)$/i, '');
+            var ext = file.name.split('.').pop().toLowerCase();
+            var icon = ext === 'svg' ? 'dashicons-media-code' : 'dashicons-format-image';
             var item = $('<div class="vpb-file-item">' +
-                '<span class="dashicons dashicons-media-code"></span>' +
+                '<span class="dashicons ' + icon + '"></span>' +
                 '<span class="vpb-file-name">' + name + '</span>' +
+                '<span class="vpb-file-ext">' + ext.toUpperCase() + '</span>' +
                 '<button type="button" class="vpb-remove-file" data-index="' + index + '">' +
                 '<span class="dashicons dashicons-no-alt"></span>' +
                 '</button>' +

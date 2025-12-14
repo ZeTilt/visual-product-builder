@@ -141,13 +141,16 @@
         state.history.push([...state.elements]);
 
         // Add element
+        const svgUrl = btn.dataset.svg;
+        const isSvg = svgUrl && svgUrl.toLowerCase().endsWith('.svg');
         const element = {
             id: parseInt(btn.dataset.id),
             name: btn.dataset.name,
             color: btn.dataset.color,
             colorHex: btn.dataset.colorHex || '#4F9ED9',
             price: parseFloat(btn.dataset.price),
-            svg: btn.dataset.svg
+            svg: svgUrl,
+            isSvg: isSvg
         };
 
         state.elements.push(element);
@@ -394,7 +397,13 @@
             const div = document.createElement('div');
             div.className = 'vpb-preview-element';
             div.style.opacity = '0';
-            div.style.backgroundColor = element.colorHex || '#4F9ED9';
+            div.setAttribute('data-is-svg', element.isSvg ? 'true' : 'false');
+
+            // Only apply colored background for SVG elements
+            if (element.isSvg) {
+                div.style.backgroundColor = element.colorHex || '#4F9ED9';
+            }
+
             div.innerHTML = `<img src="${element.svg}" alt="${element.name}">`;
             preview.appendChild(div);
 
@@ -494,7 +503,8 @@
                 id: el.id,
                 name: el.name,
                 color: el.color,
-                colorHex: el.colorHex
+                colorHex: el.colorHex,
+                isSvg: el.isSvg
             }))
         };
         configInput.value = JSON.stringify(config);

@@ -90,7 +90,10 @@ defined( 'ABSPATH' ) || exit;
             <?php foreach ( $elements as $category => $category_elements ) : ?>
                 <div class="vpb-elements-grid" data-category="<?php echo esc_attr( $category ); ?>">
                     <?php foreach ( $category_elements as $element ) : ?>
-                        <?php $color_hex = ! empty( $element['color_hex'] ) ? $element['color_hex'] : '#4F9ED9'; ?>
+                        <?php
+                        $color_hex = ! empty( $element['color_hex'] ) ? $element['color_hex'] : '#4F9ED9';
+                        $is_svg    = ! empty( $element['svg_file'] ) && strtolower( pathinfo( $element['svg_file'], PATHINFO_EXTENSION ) ) === 'svg';
+                        ?>
                         <button type="button"
                                 class="vpb-element-btn"
                                 data-id="<?php echo esc_attr( $element['id'] ); ?>"
@@ -100,7 +103,8 @@ defined( 'ABSPATH' ) || exit;
                                 data-collection="<?php echo esc_attr( $element['collection_id'] ?? '' ); ?>"
                                 data-price="<?php echo esc_attr( $element['price'] ); ?>"
                                 data-svg="<?php echo esc_url( $element['svg_file'] ); ?>"
-                                style="--element-color: <?php echo esc_attr( $color_hex ); ?>;"
+                                data-is-svg="<?php echo $is_svg ? 'true' : 'false'; ?>"
+                                style="<?php echo $is_svg ? '--element-color: ' . esc_attr( $color_hex ) . ';' : ''; ?>"
                                 title="<?php echo esc_attr( $element['name'] . ' (' . ucfirst( $element['color'] ) . ')' ); ?>">
                             <img src="<?php echo esc_url( $element['svg_file'] ); ?>"
                                  alt="<?php echo esc_attr( $element['name'] ); ?>">
