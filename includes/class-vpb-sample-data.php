@@ -28,49 +28,25 @@ class VPB_Sample_Data {
 
     /**
      * Get sample collections data
+     * One collection per color with all elements (letters, numbers, symbols)
      *
      * @return array
      */
     public static function get_collections() {
         $collections = array();
+        $index = 1;
 
-        // Create one collection per color for letters
         foreach ( self::$colors as $color_slug => $color_hex ) {
             $color_name = ucfirst( str_replace( '-', ' ', $color_slug ) );
             $collections[] = array(
-                'name'        => 'Alphabet ' . $color_name,
-                'slug'        => 'alphabet-' . $color_slug,
-                'description' => 'Lettres de A à Z en ' . strtolower( $color_name ),
+                'name'        => $color_name,
+                'slug'        => $color_slug,
+                'description' => 'Lettres, chiffres et symboles en ' . strtolower( $color_name ),
                 'color_hex'   => $color_hex,
-                'sort_order'  => count( $collections ) + 1,
+                'sort_order'  => $index,
                 'active'      => 1,
             );
-        }
-
-        // Create one collection per color for numbers
-        foreach ( self::$colors as $color_slug => $color_hex ) {
-            $color_name = ucfirst( str_replace( '-', ' ', $color_slug ) );
-            $collections[] = array(
-                'name'        => 'Chiffres ' . $color_name,
-                'slug'        => 'chiffres-' . $color_slug,
-                'description' => 'Chiffres de 0 à 9 en ' . strtolower( $color_name ),
-                'color_hex'   => $color_hex,
-                'sort_order'  => count( $collections ) + 1,
-                'active'      => 1,
-            );
-        }
-
-        // Create one collection per color for symbols
-        foreach ( self::$colors as $color_slug => $color_hex ) {
-            $color_name = ucfirst( str_replace( '-', ' ', $color_slug ) );
-            $collections[] = array(
-                'name'        => 'Symboles ' . $color_name,
-                'slug'        => 'symboles-' . $color_slug,
-                'description' => 'Symboles décoratifs en ' . strtolower( $color_name ),
-                'color_hex'   => $color_hex,
-                'sort_order'  => count( $collections ) + 1,
-                'active'      => 1,
-            );
+            $index++;
         }
 
         return $collections;
@@ -78,6 +54,7 @@ class VPB_Sample_Data {
 
     /**
      * Get sample elements data
+     * Elements are sorted: Letters (A-Z), Numbers (0-9), Symbols (at end)
      *
      * @param array $collection_ids Map of slug => id.
      * @return array
@@ -86,45 +63,7 @@ class VPB_Sample_Data {
         $elements = array();
         $letters  = range( 'A', 'Z' );
 
-        // Letters in all colors
-        foreach ( self::$colors as $color_slug => $color_hex ) {
-            $collection_key = 'alphabet-' . $color_slug;
-            foreach ( $letters as $index => $letter ) {
-                $elements[] = array(
-                    'name'          => $letter,
-                    'slug'          => 'letter-' . strtolower( $letter ) . '-' . $color_slug,
-                    'category'      => 'letter',
-                    'color'         => $color_slug,
-                    'color_hex'     => $color_hex,
-                    'svg_file'      => VPB_PLUGIN_URL . 'assets/svg/letters/letter-' . $letter . '.svg',
-                    'collection_id' => isset( $collection_ids[ $collection_key ] ) ? $collection_ids[ $collection_key ] : null,
-                    'price'         => 0.00,
-                    'sort_order'    => $index,
-                    'active'        => 1,
-                );
-            }
-        }
-
-        // Numbers in all colors
-        foreach ( self::$colors as $color_slug => $color_hex ) {
-            $collection_key = 'chiffres-' . $color_slug;
-            for ( $i = 0; $i <= 9; $i++ ) {
-                $elements[] = array(
-                    'name'          => (string) $i,
-                    'slug'          => 'number-' . $i . '-' . $color_slug,
-                    'category'      => 'number',
-                    'color'         => $color_slug,
-                    'color_hex'     => $color_hex,
-                    'svg_file'      => VPB_PLUGIN_URL . 'assets/svg/numbers/number-' . $i . '.svg',
-                    'collection_id' => isset( $collection_ids[ $collection_key ] ) ? $collection_ids[ $collection_key ] : null,
-                    'price'         => 0.00,
-                    'sort_order'    => $i,
-                    'active'        => 1,
-                );
-            }
-        }
-
-        // Symbols
+        // Symbols definition
         $symbols = array(
             array( 'name' => 'Coeur',    'slug' => 'heart',    'file' => 'symbol-heart.svg' ),
             array( 'name' => 'Etoile',   'slug' => 'star',     'file' => 'symbol-star.svg' ),
@@ -138,9 +77,43 @@ class VPB_Sample_Data {
             array( 'name' => 'Triangle', 'slug' => 'triangle', 'file' => 'symbol-triangle.svg' ),
         );
 
-        // Symbols in all colors
+        // For each color, add all elements to the same collection
         foreach ( self::$colors as $color_slug => $color_hex ) {
-            $collection_key = 'symboles-' . $color_slug;
+            $collection_id = isset( $collection_ids[ $color_slug ] ) ? $collection_ids[ $color_slug ] : null;
+
+            // Letters first (sort_order 0-25)
+            foreach ( $letters as $index => $letter ) {
+                $elements[] = array(
+                    'name'          => $letter,
+                    'slug'          => 'letter-' . strtolower( $letter ) . '-' . $color_slug,
+                    'category'      => 'letter',
+                    'color'         => $color_slug,
+                    'color_hex'     => $color_hex,
+                    'svg_file'      => VPB_PLUGIN_URL . 'assets/svg/letters/letter-' . $letter . '.svg',
+                    'collection_id' => $collection_id,
+                    'price'         => 0.00,
+                    'sort_order'    => $index, // 0-25
+                    'active'        => 1,
+                );
+            }
+
+            // Numbers second (sort_order 100-109)
+            for ( $i = 0; $i <= 9; $i++ ) {
+                $elements[] = array(
+                    'name'          => (string) $i,
+                    'slug'          => 'number-' . $i . '-' . $color_slug,
+                    'category'      => 'number',
+                    'color'         => $color_slug,
+                    'color_hex'     => $color_hex,
+                    'svg_file'      => VPB_PLUGIN_URL . 'assets/svg/numbers/number-' . $i . '.svg',
+                    'collection_id' => $collection_id,
+                    'price'         => 0.00,
+                    'sort_order'    => 100 + $i, // 100-109
+                    'active'        => 1,
+                );
+            }
+
+            // Symbols last (sort_order 200+)
             foreach ( $symbols as $index => $symbol ) {
                 $elements[] = array(
                     'name'          => $symbol['name'],
@@ -149,9 +122,9 @@ class VPB_Sample_Data {
                     'color'         => $color_slug,
                     'color_hex'     => $color_hex,
                     'svg_file'      => VPB_PLUGIN_URL . 'assets/svg/symbols/' . $symbol['file'],
-                    'collection_id' => isset( $collection_ids[ $collection_key ] ) ? $collection_ids[ $collection_key ] : null,
+                    'collection_id' => $collection_id,
                     'price'         => 0.00,
-                    'sort_order'    => $index,
+                    'sort_order'    => 200 + $index, // 200+
                     'active'        => 1,
                 );
             }
