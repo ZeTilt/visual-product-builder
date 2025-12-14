@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 160">
+  <defs>
+    <!-- Wood grain pattern -->
+    <pattern id="woodGrain" patternUnits="userSpaceOnUse" width="200" height="160">
+      <rect fill="#DEB887" width="200" height="160"/>
+      <!-- Wood grain lines -->
+      <path d="M0,20 Q50,18 100,22 T200,20" stroke="#D2A679" stroke-width="1" fill="none" opacity="0.5"/>
+      <path d="M0,45 Q60,42 120,48 T200,45" stroke="#C9976B" stroke-width="1.5" fill="none" opacity="0.4"/>
+      <path d="M0,70 Q40,68 80,73 T160,70 T200,72" stroke="#D2A679" stroke-width="1" fill="none" opacity="0.5"/>
+      <path d="M0,95 Q70,92 140,98 T200,95" stroke="#C9976B" stroke-width="1" fill="none" opacity="0.4"/>
+      <path d="M0,120 Q55,117 110,123 T200,120" stroke="#D2A679" stroke-width="1.5" fill="none" opacity="0.5"/>
+      <path d="M0,145 Q45,143 90,147 T180,145 T200,146" stroke="#C9976B" stroke-width="1" fill="none" opacity="0.4"/>
+      <!-- Knots -->
+      <ellipse cx="150" cy="80" rx="8" ry="6" fill="#B8956E" opacity="0.3"/>
+      <ellipse cx="50" cy="130" rx="5" ry="4" fill="#B8956E" opacity="0.25"/>
+    </pattern>
+
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Rope/string hanger -->
+  <path d="M370,8 Q400,-5 430,8" stroke="#8B7355" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="370" cy="10" r="5" fill="#A08060"/>
+  <circle cx="430" cy="10" r="5" fill="#A08060"/>
+
+  <!-- Main wooden plank -->
+  <rect x="40" y="20" width="720" height="120" rx="15" ry="15" fill="url(#woodGrain)" filter="url(#shadow)"/>
+
+  <!-- Wood edge highlight (top) -->
+  <rect x="40" y="20" width="720" height="8" rx="15" ry="8" fill="#E8C99B" opacity="0.5"/>
+
+  <!-- Wood edge shadow (bottom) -->
+  <rect x="40" y="132" width="720" height="8" rx="8" ry="8" fill="#A08060" opacity="0.3"/>
+
+  <!-- Screw holes for rope -->
+  <circle cx="370" cy="28" r="4" fill="#8B7355"/>
+  <circle cx="430" cy="28" r="4" fill="#8B7355"/>
+</svg>
