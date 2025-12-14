@@ -22,6 +22,20 @@
     font-size: 14px;
 }
 
+/* Preview Section */
+.vpb-preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Config Section */
+.vpb-config-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 /* Preview */
 .vpb-preview-container {
     background: var(--vpb-bg);
