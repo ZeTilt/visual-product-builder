@@ -79,9 +79,9 @@
     justify-content: center;
     flex-shrink: 0;
     animation: vpb-pop-in 0.3s ease;
-    background-color: var(--element-color, #4F9ED9);
     border-radius: var(--vpb-radius-sm);
     padding: 6px;
+    /* backgroundColor set via JS */
 }
 
 .vpb-preview-element img {
