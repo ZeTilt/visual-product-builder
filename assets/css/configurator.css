@@ -54,6 +54,24 @@
     align-items: center;
     justify-content: center;
     box-shadow: var(--vpb-glass-shadow);
+    position: relative;
+}
+
+/* Support image styling */
+.vpb-preview-container.has-support-image {
+    flex-direction: column;
+    padding: 12px;
+}
+
+.vpb-support-image {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+    border-radius: var(--vpb-radius-sm);
+}
+
+.vpb-preview-container.has-support-image .vpb-preview-canvas {
+    margin-top: 10px;
 }
 
 .vpb-preview-canvas {

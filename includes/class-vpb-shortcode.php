@@ -113,6 +113,9 @@ class VPB_Shortcode {
         }
         sort( $colors );
 
+        // Get support image for this product
+        $support_image = get_post_meta( $product_id, '_vpb_support_image', true );
+
         // Start output buffering
         ob_start();
 

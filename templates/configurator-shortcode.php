@@ -8,6 +8,7 @@
  * @var array $colors
  * @var array $product_collections
  * @var int $limit
+ * @var string $support_image
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -16,14 +17,18 @@ defined( 'ABSPATH' ) || exit;
 <div class="vpb-configurator"
      data-product-id="<?php echo esc_attr( $product_id ); ?>"
      data-limit="<?php echo esc_attr( $limit ); ?>"
-     data-base-price="<?php echo esc_attr( $product->get_price() ); ?>">
+     data-base-price="<?php echo esc_attr( $product->get_price() ); ?>"
+     data-support-image="<?php echo esc_url( $support_image ); ?>">
 
     <!-- Zone de prévisualisation -->
     <div class="vpb-preview-section">
-        <div class="vpb-preview-container">
+        <div class="vpb-preview-container<?php echo $support_image ? ' has-support-image' : ''; ?>">
+            <?php if ( $support_image ) : ?>
+                <img src="<?php echo esc_url( $support_image ); ?>" alt="Support" class="vpb-support-image">
+            <?php endif; ?>
             <div class="vpb-preview-canvas" id="vpb-preview">
                 <div class="vpb-preview-placeholder">
-                    Votre création apparaîtra ici
+                    <?php echo $support_image ? 'Cliquez sur un élément pour commencer' : 'Votre création apparaîtra ici'; ?>
                 </div>
             </div>
         </div>

@@ -598,7 +598,32 @@ class VPB_Admin {
 
         $collections         = VPB_Collection::get_collections( array( 'active' => 1 ) );
         $selected_ids        = VPB_Collection::get_product_collection_ids( $post->ID );
+        $support_image       = get_post_meta( $post->ID, '_vpb_support_image', true );
         ?>
+
+        <!-- Image de support -->
+        <p>
+            <strong>Image de support</strong><br>
+            <small>Image sur laquelle les éléments seront placés.</small>
+        </p>
+        <div class="vpb-support-image-field" style="margin-bottom: 15px;">
+            <div id="vpb-support-image-preview" style="margin-bottom: 10px; <?php echo empty( $support_image ) ? 'display: none;' : ''; ?>">
+                <?php if ( $support_image ) : ?>
+                    <img src="<?php echo esc_url( $support_image ); ?>" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                <?php endif; ?>
+            </div>
+            <input type="hidden" name="vpb_support_image" id="vpb-support-image-input" value="<?php echo esc_url( $support_image ); ?>">
+            <button type="button" class="button" id="vpb-support-image-btn">
+                <?php echo $support_image ? 'Changer l\'image' : 'Choisir une image'; ?>
+            </button>
+            <button type="button" class="button" id="vpb-support-image-remove" style="<?php echo empty( $support_image ) ? 'display: none;' : ''; ?>">
+                Supprimer
+            </button>
+        </div>
+
+        <hr style="margin: 15px 0;">
+
+        <!-- Collections -->
         <p>
             <strong>Collections disponibles</strong><br>
             <small>Sélectionnez les collections à afficher pour ce produit.</small>
@@ -621,6 +646,36 @@ class VPB_Admin {
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
+
+        <script>
+        jQuery(document).ready(function($) {
+            // Support image upload
+            $('#vpb-support-image-btn').on('click', function(e) {
+                e.preventDefault();
+                var frame = wp.media({
+                    title: 'Choisir une image de support',
+                    button: { text: 'Utiliser cette image' },
+                    multiple: false
+                });
+                frame.on('select', function() {
+                    var attachment = frame.state().get('selection').first().toJSON();
+                    $('#vpb-support-image-input').val(attachment.url);
+                    $('#vpb-support-image-preview').html('<img src="' + attachment.url + '" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">').show();
+                    $('#vpb-support-image-btn').text('Changer l\'image');
+                    $('#vpb-support-image-remove').show();
+                });
+                frame.open();
+            });
+
+            // Remove support image
+            $('#vpb-support-image-remove').on('click', function() {
+                $('#vpb-support-image-input').val('');
+                $('#vpb-support-image-preview').empty().hide();
+                $('#vpb-support-image-btn').text('Choisir une image');
+                $(this).hide();
+            });
+        });
+        </script>
         <?php
     }
 
@@ -646,8 +701,16 @@ class VPB_Admin {
             return;
         }
 
+        // Save collections
         $collection_ids = isset( $_POST['vpb_collections'] ) ? array_map( 'absint', $_POST['vpb_collections'] ) : array();
-
         VPB_Collection::set_product_collections( $post_id, $collection_ids );
+
+        // Save support image
+        $support_image = isset( $_POST['vpb_support_image'] ) ? esc_url_raw( $_POST['vpb_support_image'] ) : '';
+        if ( $support_image ) {
+            update_post_meta( $post_id, '_vpb_support_image', $support_image );
+        } else {
+            delete_post_meta( $post_id, '_vpb_support_image' );
+        }
     }
 }
