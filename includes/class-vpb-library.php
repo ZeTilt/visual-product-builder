@@ -126,29 +126,39 @@ class VPB_Library {
 
         $table    = $wpdb->prefix . 'vpb_elements';
         $defaults = array(
-            'name'       => '',
-            'slug'       => '',
-            'category'   => 'letter',
-            'svg_file'   => '',
-            'color'      => 'default',
-            'price'      => 0.00,
-            'sort_order' => 0,
-            'active'     => 1,
+            'name'          => '',
+            'slug'          => '',
+            'category'      => 'letter',
+            'svg_file'      => '',
+            'color'         => 'default',
+            'color_hex'     => '#4F9ED9',
+            'collection_id' => null,
+            'price'         => 0.00,
+            'sort_order'    => 0,
+            'active'        => 1,
         );
 
         $data = wp_parse_args( $data, $defaults );
 
         // Sanitize
-        $data['name']       = sanitize_text_field( $data['name'] );
-        $data['slug']       = sanitize_title( $data['slug'] );
-        $data['category']   = sanitize_key( $data['category'] );
-        $data['svg_file']   = esc_url_raw( $data['svg_file'] );
-        $data['color']      = sanitize_key( $data['color'] );
-        $data['price']      = floatval( $data['price'] );
-        $data['sort_order'] = absint( $data['sort_order'] );
-        $data['active']     = absint( $data['active'] );
+        $insert_data = array(
+            'name'       => sanitize_text_field( $data['name'] ),
+            'slug'       => sanitize_title( $data['slug'] ),
+            'category'   => sanitize_key( $data['category'] ),
+            'svg_file'   => esc_url_raw( $data['svg_file'] ),
+            'color'      => sanitize_text_field( $data['color'] ),
+            'color_hex'  => sanitize_hex_color( $data['color_hex'] ) ?: '#4F9ED9',
+            'price'      => floatval( $data['price'] ),
+            'sort_order' => absint( $data['sort_order'] ),
+            'active'     => absint( $data['active'] ),
+        );
 
-        $result = $wpdb->insert( $table, $data );
+        // Handle collection_id (can be null)
+        if ( ! empty( $data['collection_id'] ) ) {
+            $insert_data['collection_id'] = absint( $data['collection_id'] );
+        }
+
+        $result = $wpdb->insert( $table, $insert_data );
 
         return $result ? $wpdb->insert_id : false;
     }
@@ -163,35 +173,46 @@ class VPB_Library {
     public static function update_element( $id, $data ) {
         global $wpdb;
 
-        $table = $wpdb->prefix . 'vpb_elements';
+        $table       = $wpdb->prefix . 'vpb_elements';
+        $update_data = array();
 
-        // Sanitize
+        // Sanitize each field
         if ( isset( $data['name'] ) ) {
-            $data['name'] = sanitize_text_field( $data['name'] );
+            $update_data['name'] = sanitize_text_field( $data['name'] );
         }
         if ( isset( $data['slug'] ) ) {
-            $data['slug'] = sanitize_title( $data['slug'] );
+            $update_data['slug'] = sanitize_title( $data['slug'] );
         }
         if ( isset( $data['category'] ) ) {
-            $data['category'] = sanitize_key( $data['category'] );
+            $update_data['category'] = sanitize_key( $data['category'] );
         }
         if ( isset( $data['svg_file'] ) ) {
-            $data['svg_file'] = esc_url_raw( $data['svg_file'] );
+            $update_data['svg_file'] = esc_url_raw( $data['svg_file'] );
         }
         if ( isset( $data['color'] ) ) {
-            $data['color'] = sanitize_key( $data['color'] );
+            $update_data['color'] = sanitize_text_field( $data['color'] );
+        }
+        if ( isset( $data['color_hex'] ) ) {
+            $update_data['color_hex'] = sanitize_hex_color( $data['color_hex'] ) ?: '#4F9ED9';
+        }
+        if ( array_key_exists( 'collection_id', $data ) ) {
+            $update_data['collection_id'] = ! empty( $data['collection_id'] ) ? absint( $data['collection_id'] ) : null;
         }
         if ( isset( $data['price'] ) ) {
-            $data['price'] = floatval( $data['price'] );
+            $update_data['price'] = floatval( $data['price'] );
         }
         if ( isset( $data['sort_order'] ) ) {
-            $data['sort_order'] = absint( $data['sort_order'] );
+            $update_data['sort_order'] = absint( $data['sort_order'] );
         }
         if ( isset( $data['active'] ) ) {
-            $data['active'] = absint( $data['active'] );
+            $update_data['active'] = absint( $data['active'] );
         }
 
-        return $wpdb->update( $table, $data, array( 'id' => $id ) ) !== false;
+        if ( empty( $update_data ) ) {
+            return false;
+        }
+
+        return $wpdb->update( $table, $update_data, array( 'id' => $id ) ) !== false;
     }
 
     /**

@@ -186,6 +186,63 @@
     color: var(--vpb-success);
 }
 
+/* Collection Tabs */
+.vpb-collection-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: var(--vpb-radius);
+}
+
+.vpb-collection-tab {
+    padding: 8px 16px;
+    border: 2px solid transparent;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--vpb-text-muted);
+    cursor: pointer;
+    transition: var(--vpb-transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.vpb-collection-tab::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background: var(--collection-color, var(--vpb-primary));
+    border-radius: 3px 3px 0 0;
+    transition: width 0.2s ease;
+}
+
+.vpb-collection-tab:hover {
+    color: var(--vpb-text);
+    background: #fff;
+}
+
+.vpb-collection-tab:hover::before {
+    width: 60%;
+}
+
+.vpb-collection-tab.active {
+    color: var(--vpb-text);
+    background: #fff;
+    border-color: var(--collection-color, var(--vpb-primary));
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.vpb-collection-tab.active::before {
+    width: 80%;
+}
+
 /* Color Filter */
 .vpb-color-filter {
     display: flex;
@@ -276,6 +333,25 @@
     max-width: 90%;
     max-height: 90%;
     object-fit: contain;
+}
+
+/* SVG colorization - inherit color from button */
+.vpb-element-btn img[src$=".svg"] {
+    filter: none;
+}
+
+/* Color indicator on element buttons */
+.vpb-element-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .vpb-element-btn.hidden {
@@ -514,6 +590,22 @@
 
     .vpb-price-display strong {
         font-size: 15px;
+    }
+
+    /* Collection tabs - horizontal scroll */
+    .vpb-collection-tabs {
+        gap: 4px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .vpb-collection-tab {
+        padding: 6px 12px;
+        font-size: 11px;
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     /* Color filter - horizontal scroll */

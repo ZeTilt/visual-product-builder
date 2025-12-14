@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 646 1000" preserveAspectRatio="xMidYMid meet">
+  <g transform="translate(0, 800) scale(1, -1)" fill="currentColor">
+    <path d="M562 393q59 -70 59 -157q-2 -100 -68.5 -167.5t-161.5 -67.5h-263q-70 0 -82 38q-6 17 -6 52v555q0 24 1.5 35t9.5 26q14 27 78 27h252q92 0 154 -64q65 -65 65 -156q0 -66 -38 -121zM444 246q0 24 -5.5 38t-18.5 20q-20 8 -56 8t-54 14t-18 57.5t18.5 57.5t61.5 14q40 0 48 21q3 11 3 36t-16.5 35t-49.5 10h-140v-379h164q63 0 63 68z"/>
+  </g>
+</svg>

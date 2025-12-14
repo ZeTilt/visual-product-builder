@@ -28,15 +28,17 @@ class VPB_Shortcode {
     public function render_configurator( $atts ) {
         $atts = shortcode_atts(
             array(
-                'product_id' => 0,
-                'limit'      => 10,
+                'product_id'  => 0,
+                'limit'       => 10,
+                'collections' => '', // Comma-separated collection slugs or IDs
             ),
             $atts,
             'vpb_configurator'
         );
 
-        $product_id = absint( $atts['product_id'] );
-        $limit      = absint( $atts['limit'] );
+        $product_id  = absint( $atts['product_id'] );
+        $limit       = absint( $atts['limit'] );
+        $collections = $atts['collections'];
 
         // If no product ID, try to get from current product page
         if ( ! $product_id && is_product() ) {
@@ -55,9 +57,61 @@ class VPB_Shortcode {
             return '<p class="vpb-error">' . esc_html__( 'Product not found.', 'visual-product-builder' ) . '</p>';
         }
 
-        // Get elements
-        $elements = VPB_Library::get_elements_grouped();
-        $colors   = VPB_Library::get_available_colors();
+        // Get collections for this product
+        $product_collections = array();
+
+        if ( ! empty( $collections ) ) {
+            // Use collections from shortcode attribute
+            $collection_refs = array_map( 'trim', explode( ',', $collections ) );
+            foreach ( $collection_refs as $ref ) {
+                if ( is_numeric( $ref ) ) {
+                    $col = VPB_Collection::get_collection( absint( $ref ) );
+                } else {
+                    $col = VPB_Collection::get_collection_by_slug( $ref );
+                }
+                if ( $col && $col->active ) {
+                    $product_collections[] = $col;
+                }
+            }
+        } else {
+            // Use collections assigned to product
+            $product_collections = VPB_Collection::get_product_collections( $product_id );
+        }
+
+        // Get elements - either by collections or all active
+        $elements_data = array();
+
+        if ( ! empty( $product_collections ) ) {
+            // Get elements from assigned collections
+            foreach ( $product_collections as $collection ) {
+                $collection_elements = VPB_Collection::get_elements( $collection->id );
+                foreach ( $collection_elements as $el ) {
+                    $elements_data[] = (array) $el;
+                }
+            }
+        } else {
+            // Fallback to all active elements
+            $elements_data = VPB_Library::get_elements();
+        }
+
+        // Group elements by category
+        $elements = array();
+        foreach ( $elements_data as $element ) {
+            $category = $element['category'];
+            if ( ! isset( $elements[ $category ] ) ) {
+                $elements[ $category ] = array();
+            }
+            $elements[ $category ][] = $element;
+        }
+
+        // Get available colors from loaded elements
+        $colors = array();
+        foreach ( $elements_data as $element ) {
+            if ( ! empty( $element['color'] ) && ! in_array( $element['color'], $colors, true ) ) {
+                $colors[] = $element['color'];
+            }
+        }
+        sort( $colors );
 
         // Start output buffering
         ob_start();

@@ -3,7 +3,7 @@
  * Plugin Name: Visual Product Builder
  * Plugin URI: https://github.com/your-repo/visual-product-builder
  * Description: WooCommerce add-on for visual product customization with linear element placement.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Author: ZeTilt
  * Author URI: https://zetilt.com
  * License: GPL v2 or later
@@ -21,7 +21,8 @@
 defined( 'ABSPATH' ) || exit;
 
 // Plugin constants
-define( 'VPB_VERSION', '0.1.0' );
+define( 'VPB_VERSION', '0.2.0' );
+define( 'VPB_DB_VERSION', '2' );
 define( 'VPB_PLUGIN_FILE', __FILE__ );
 define( 'VPB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'VPB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -64,6 +65,8 @@ function vpb_init() {
     require_once VPB_PLUGIN_DIR . 'includes/class-vpb-pricing.php';
     require_once VPB_PLUGIN_DIR . 'includes/class-vpb-shortcode.php';
     require_once VPB_PLUGIN_DIR . 'includes/class-vpb-sample-data.php';
+    require_once VPB_PLUGIN_DIR . 'includes/class-vpb-collection.php';
+    require_once VPB_PLUGIN_DIR . 'includes/class-vpb-image-optimizer.php';
 
     // Load admin classes
     if ( is_admin() ) {
@@ -77,6 +80,10 @@ function vpb_init() {
     new VPB_Order();
     new VPB_Pricing();
     new VPB_Shortcode();
+    new VPB_Image_Optimizer();
+
+    // Check for database updates
+    vpb_maybe_update_db();
 }
 add_action( 'plugins_loaded', 'vpb_init' );
 
@@ -114,13 +121,15 @@ function vpb_create_tables() {
     // Elements library table
     $table_elements = $wpdb->prefix . 'vpb_elements';
 
-    $sql = "CREATE TABLE $table_elements (
+    $sql_elements = "CREATE TABLE $table_elements (
         id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
         name varchar(100) NOT NULL,
         slug varchar(100) NOT NULL,
         category varchar(50) NOT NULL DEFAULT 'letter',
         svg_file varchar(255) NOT NULL,
         color varchar(50) NOT NULL DEFAULT 'default',
+        color_hex varchar(7) DEFAULT '#4F9ED9',
+        collection_id bigint(20) unsigned DEFAULT NULL,
         price decimal(10,2) NOT NULL DEFAULT 0.00,
         sort_order int(11) NOT NULL DEFAULT 0,
         active tinyint(1) NOT NULL DEFAULT 1,
@@ -129,11 +138,59 @@ function vpb_create_tables() {
         PRIMARY KEY  (id),
         KEY category (category),
         KEY color (color),
+        KEY collection_id (collection_id),
         KEY active (active)
     ) $charset_collate;";
 
+    // Collections table
+    $table_collections = $wpdb->prefix . 'vpb_collections';
+
+    $sql_collections = "CREATE TABLE $table_collections (
+        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+        name varchar(100) NOT NULL,
+        slug varchar(100) NOT NULL,
+        description text DEFAULT NULL,
+        color_hex varchar(7) DEFAULT '#4F9ED9',
+        thumbnail_url varchar(255) DEFAULT NULL,
+        sort_order int(11) NOT NULL DEFAULT 0,
+        active tinyint(1) NOT NULL DEFAULT 1,
+        created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id),
+        UNIQUE KEY slug (slug)
+    ) $charset_collate;";
+
+    // Product-Collections relationship table (many-to-many)
+    $table_product_collections = $wpdb->prefix . 'vpb_product_collections';
+
+    $sql_product_collections = "CREATE TABLE $table_product_collections (
+        id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+        product_id bigint(20) unsigned NOT NULL,
+        collection_id bigint(20) unsigned NOT NULL,
+        sort_order int(11) NOT NULL DEFAULT 0,
+        PRIMARY KEY  (id),
+        UNIQUE KEY product_collection (product_id, collection_id),
+        KEY product_id (product_id),
+        KEY collection_id (collection_id)
+    ) $charset_collate;";
+
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-    dbDelta( $sql );
+    dbDelta( $sql_elements );
+    dbDelta( $sql_collections );
+    dbDelta( $sql_product_collections );
+
+    update_option( 'vpb_db_version', VPB_DB_VERSION );
+}
+
+/**
+ * Check if database needs updating
+ */
+function vpb_maybe_update_db() {
+    $installed_db_version = get_option( 'vpb_db_version', '1' );
+
+    if ( version_compare( $installed_db_version, VPB_DB_VERSION, '<' ) ) {
+        vpb_create_tables();
+    }
 }
 
 /**

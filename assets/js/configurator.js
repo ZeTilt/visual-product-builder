@@ -74,6 +74,11 @@
             tab.addEventListener('click', () => filterByColor(tab));
         });
 
+        // Collection filter switching
+        container.querySelectorAll('.vpb-collection-tab').forEach(tab => {
+            tab.addEventListener('click', () => filterByCollection(tab));
+        });
+
         // Controls
         undoBtn.addEventListener('click', undoLast);
         resetBtn.addEventListener('click', confirmReset);
@@ -140,6 +145,7 @@
             id: parseInt(btn.dataset.id),
             name: btn.dataset.name,
             color: btn.dataset.color,
+            colorHex: btn.dataset.colorHex || '#4F9ED9',
             price: parseFloat(btn.dataset.price),
             svg: btn.dataset.svg
         };
@@ -292,10 +298,42 @@
         });
         tab.classList.add('active');
 
+        // Apply combined filters
+        applyFilters();
+    }
+
+    /**
+     * Filter elements by collection
+     */
+    function filterByCollection(tab) {
+        const collection = tab.dataset.collection;
+
+        // Update tab styles with animation
+        container.querySelectorAll('.vpb-collection-tab').forEach(t => {
+            t.classList.remove('active');
+        });
+        tab.classList.add('active');
+
+        // Apply combined filters
+        applyFilters();
+    }
+
+    /**
+     * Apply combined filters (color + collection)
+     */
+    function applyFilters() {
+        const activeColorTab = container.querySelector('.vpb-color-tab.active');
+        const activeCollectionTab = container.querySelector('.vpb-collection-tab.active');
+
+        const color = activeColorTab ? activeColorTab.dataset.color : 'all';
+        const collection = activeCollectionTab ? activeCollectionTab.dataset.collection : 'all';
+
         // Show/hide elements with staggered animation
         let visibleIndex = 0;
         container.querySelectorAll('.vpb-element-btn').forEach(btn => {
-            const matches = color === 'all' || btn.dataset.color === color;
+            const matchesColor = color === 'all' || btn.dataset.color === color;
+            const matchesCollection = collection === 'all' || btn.dataset.collection === collection;
+            const matches = matchesColor && matchesCollection;
 
             if (matches) {
                 btn.classList.remove('hidden');
@@ -356,7 +394,8 @@
             const div = document.createElement('div');
             div.className = 'vpb-preview-element';
             div.style.opacity = '0';
-            div.innerHTML = `<img src="${element.svg}" alt="${element.name}">`;
+            div.style.color = element.colorHex || '#4F9ED9';
+            div.innerHTML = `<img src="${element.svg}" alt="${element.name}" style="color: inherit;">`;
             preview.appendChild(div);
 
             // Staggered pop-in animation
@@ -454,7 +493,8 @@
             elements: state.elements.map(el => ({
                 id: el.id,
                 name: el.name,
-                color: el.color
+                color: el.color,
+                colorHex: el.colorHex
             }))
         };
         configInput.value = JSON.stringify(config);

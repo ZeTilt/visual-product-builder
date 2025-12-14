@@ -6,6 +6,7 @@
  * @var WC_Product $product
  * @var array $elements
  * @var array $colors
+ * @var array $product_collections
  * @var int $limit
  */
 
@@ -50,6 +51,23 @@ defined( 'ABSPATH' ) || exit;
             </span>
         </div>
 
+        <?php if ( ! empty( $product_collections ) && count( $product_collections ) > 1 ) : ?>
+            <!-- Onglets de collections -->
+            <div class="vpb-collection-tabs">
+                <button type="button" class="vpb-collection-tab active" data-collection="all">
+                    Tout
+                </button>
+                <?php foreach ( $product_collections as $collection ) : ?>
+                    <button type="button"
+                            class="vpb-collection-tab"
+                            data-collection="<?php echo esc_attr( $collection->id ); ?>"
+                            style="--collection-color: <?php echo esc_attr( $collection->color_hex ); ?>">
+                        <?php echo esc_html( $collection->name ); ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
         <!-- Filtre par couleur -->
         <?php if ( count( $colors ) > 1 ) : ?>
             <div class="vpb-color-filter">
@@ -72,13 +90,17 @@ defined( 'ABSPATH' ) || exit;
             <?php foreach ( $elements as $category => $category_elements ) : ?>
                 <div class="vpb-elements-grid" data-category="<?php echo esc_attr( $category ); ?>">
                     <?php foreach ( $category_elements as $element ) : ?>
+                        <?php $color_hex = ! empty( $element['color_hex'] ) ? $element['color_hex'] : '#4F9ED9'; ?>
                         <button type="button"
                                 class="vpb-element-btn"
                                 data-id="<?php echo esc_attr( $element['id'] ); ?>"
                                 data-name="<?php echo esc_attr( $element['name'] ); ?>"
                                 data-color="<?php echo esc_attr( $element['color'] ); ?>"
+                                data-color-hex="<?php echo esc_attr( $color_hex ); ?>"
+                                data-collection="<?php echo esc_attr( $element['collection_id'] ?? '' ); ?>"
                                 data-price="<?php echo esc_attr( $element['price'] ); ?>"
-                                data-svg="<?php echo esc_attr( $element['svg_file'] ); ?>"
+                                data-svg="<?php echo esc_url( $element['svg_file'] ); ?>"
+                                style="color: <?php echo esc_attr( $color_hex ); ?>;"
                                 title="<?php echo esc_attr( $element['name'] . ' (' . ucfirst( $element['color'] ) . ')' ); ?>">
                             <img src="<?php echo esc_url( $element['svg_file'] ); ?>"
                                  alt="<?php echo esc_attr( $element['name'] ); ?>">
