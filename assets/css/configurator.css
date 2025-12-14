@@ -57,21 +57,35 @@
     position: relative;
 }
 
-/* Support image styling */
+/* Support image styling - overlay mode */
 .vpb-preview-container.has-support-image {
-    flex-direction: column;
     padding: 12px;
+    min-height: auto;
 }
 
 .vpb-support-image {
     max-width: 100%;
-    max-height: 200px;
+    max-height: 250px;
     object-fit: contain;
     border-radius: var(--vpb-radius-sm);
+    display: block;
 }
 
+/* Elements overlay on top of support image */
 .vpb-preview-container.has-support-image .vpb-preview-canvas {
-    margin-top: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.vpb-preview-canvas.vpb-overlay-mode {
+    min-height: auto;
 }
 
 .vpb-preview-canvas {

@@ -26,10 +26,12 @@ defined( 'ABSPATH' ) || exit;
             <?php if ( $support_image ) : ?>
                 <img src="<?php echo esc_url( $support_image ); ?>" alt="Support" class="vpb-support-image">
             <?php endif; ?>
-            <div class="vpb-preview-canvas" id="vpb-preview">
-                <div class="vpb-preview-placeholder">
-                    <?php echo $support_image ? 'Cliquez sur un élément pour commencer' : 'Votre création apparaîtra ici'; ?>
-                </div>
+            <div class="vpb-preview-canvas <?php echo $support_image ? 'vpb-overlay-mode' : ''; ?>" id="vpb-preview">
+                <?php if ( ! $support_image ) : ?>
+                    <div class="vpb-preview-placeholder">
+                        Votre création apparaîtra ici
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
 
