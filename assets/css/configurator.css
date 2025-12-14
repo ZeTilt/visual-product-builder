@@ -106,25 +106,34 @@
     justify-content: center;
 }
 
-.vpb-btn {
-    padding: 4px 10px;
-    border: 1px solid var(--vpb-border);
-    border-radius: 3px;
-    font-size: 11px;
+.vpb-btn-icon {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--vpb-text-muted);
     cursor: pointer;
-    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.vpb-btn-icon:hover {
+    background: var(--vpb-bg);
     color: var(--vpb-text);
 }
 
-.vpb-btn:disabled {
-    opacity: 0.4;
+.vpb-btn-icon:disabled {
+    opacity: 0.3;
     cursor: not-allowed;
 }
 
-.vpb-btn-primary {
-    background: var(--vpb-primary);
-    border-color: var(--vpb-primary);
-    color: #fff;
+.vpb-btn-icon:disabled:hover {
+    background: transparent;
+    color: var(--vpb-text-muted);
 }
 
 /* Status */

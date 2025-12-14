@@ -37,11 +37,11 @@ defined( 'ABSPATH' ) || exit;
 
         <!-- Contrôles -->
         <div class="vpb-controls">
-            <button type="button" class="vpb-btn vpb-btn-secondary" id="vpb-undo" disabled>
-                Annuler
+            <button type="button" class="vpb-btn-icon" id="vpb-undo" disabled title="Annuler">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 0 1 5 5v2M3 10l5-5M3 10l5 5"/></svg>
             </button>
-            <button type="button" class="vpb-btn vpb-btn-secondary" id="vpb-reset">
-                Recommencer
+            <button type="button" class="vpb-btn-icon" id="vpb-reset" title="Recommencer">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
             </button>
         </div>
     </div>
