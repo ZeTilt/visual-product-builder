@@ -400,7 +400,7 @@ class VPB_Admin {
     }
 
     /**
-     * AJAX: Purge all collections
+     * AJAX: Purge all collections and elements
      */
     public function ajax_purge_collections() {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
@@ -411,6 +411,10 @@ class VPB_Admin {
 
         global $wpdb;
 
+        // Clear elements table
+        $elements_table = $wpdb->prefix . 'vpb_elements';
+        $wpdb->query( "TRUNCATE TABLE $elements_table" );
+
         // Clear collections table
         $collections_table = $wpdb->prefix . 'vpb_collections';
         $wpdb->query( "TRUNCATE TABLE $collections_table" );
@@ -419,11 +423,7 @@ class VPB_Admin {
         $product_collections_table = $wpdb->prefix . 'vpb_product_collections';
         $wpdb->query( "TRUNCATE TABLE $product_collections_table" );
 
-        // Reset collection_id on all elements
-        $elements_table = $wpdb->prefix . 'vpb_elements';
-        $wpdb->query( "UPDATE $elements_table SET collection_id = NULL" );
-
-        wp_send_json_success( array( 'message' => 'Toutes les collections ont été supprimées' ) );
+        wp_send_json_success( array( 'message' => 'Toutes les collections et éléments ont été supprimés' ) );
     }
 
     /**

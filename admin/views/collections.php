@@ -11,7 +11,7 @@ defined( 'ABSPATH' ) || exit;
     <h1 class="wp-heading-inline">Collections</h1>
     <button type="button" class="page-title-action" id="vpb-add-collection">Ajouter une collection</button>
     <?php if ( ! empty( $collections ) ) : ?>
-        <button type="button" class="page-title-action vpb-danger-action" id="vpb-purge-collections">Tout supprimer</button>
+        <button type="button" class="page-title-action vpb-danger-action" id="vpb-purge-collections">Tout purger</button>
     <?php endif; ?>
     <hr class="wp-header-end">
 
@@ -423,10 +423,10 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // Purge all collections
+    // Purge all collections and elements
     $('#vpb-purge-collections').on('click', function() {
         var count = $('.vpb-collection-card').length;
-        if (!confirm('Voulez-vous vraiment supprimer les ' + count + ' collections ?\n\nLes éléments ne seront pas supprimés mais ne seront plus assignés à aucune collection.')) {
+        if (!confirm('Voulez-vous vraiment TOUT supprimer ?\n\n• ' + count + ' collections\n• Tous les éléments\n\nCette action est irréversible.')) {
             return;
         }
 
