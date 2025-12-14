@@ -69,11 +69,6 @@
             tab.addEventListener('click', () => switchTab(tab));
         });
 
-        // Color filter switching
-        container.querySelectorAll('.vpb-color-tab').forEach(tab => {
-            tab.addEventListener('click', () => filterByColor(tab));
-        });
-
         // Collection filter switching
         container.querySelectorAll('.vpb-collection-tab').forEach(tab => {
             tab.addEventListener('click', () => filterByCollection(tab));
@@ -290,22 +285,6 @@
     }
 
     /**
-     * Filter elements by color
-     */
-    function filterByColor(tab) {
-        const color = tab.dataset.color;
-
-        // Update tab styles with animation
-        container.querySelectorAll('.vpb-color-tab').forEach(t => {
-            t.classList.remove('active');
-        });
-        tab.classList.add('active');
-
-        // Apply combined filters
-        applyFilters();
-    }
-
-    /**
      * Filter elements by collection
      */
     function filterByCollection(tab) {
@@ -317,26 +296,10 @@
         });
         tab.classList.add('active');
 
-        // Apply combined filters
-        applyFilters();
-    }
-
-    /**
-     * Apply combined filters (color + collection)
-     */
-    function applyFilters() {
-        const activeColorTab = container.querySelector('.vpb-color-tab.active');
-        const activeCollectionTab = container.querySelector('.vpb-collection-tab.active');
-
-        const color = activeColorTab ? activeColorTab.dataset.color : 'all';
-        const collection = activeCollectionTab ? activeCollectionTab.dataset.collection : 'all';
-
         // Show/hide elements with staggered animation
         let visibleIndex = 0;
         container.querySelectorAll('.vpb-element-btn').forEach(btn => {
-            const matchesColor = color === 'all' || btn.dataset.color === color;
-            const matchesCollection = collection === 'all' || btn.dataset.collection === collection;
-            const matches = matchesColor && matchesCollection;
+            const matches = collection === 'all' || btn.dataset.collection === collection;
 
             if (matches) {
                 btn.classList.remove('hidden');

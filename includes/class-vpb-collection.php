@@ -295,6 +295,7 @@ class VPB_Collection {
             'active'  => 1,
             'orderby' => 'sort_order',
             'order'   => 'ASC',
+            'limit'   => 0,
         );
 
         $args = wp_parse_args( $args, $defaults );
@@ -313,8 +314,13 @@ class VPB_Collection {
         $orderby = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'sort_order';
         $order   = strtoupper( $args['order'] ) === 'DESC' ? 'DESC' : 'ASC';
 
+        $limit_clause = '';
+        if ( $args['limit'] > 0 ) {
+            $limit_clause = $wpdb->prepare( ' LIMIT %d', $args['limit'] );
+        }
+
         return $wpdb->get_results(
-            "SELECT * FROM {$table_elements} WHERE {$where_clause} ORDER BY {$orderby} {$order}"
+            "SELECT * FROM {$table_elements} WHERE {$where_clause} ORDER BY {$orderby} {$order}{$limit_clause}"
         );
     }
 

@@ -59,36 +59,37 @@ defined( 'ABSPATH' ) || exit;
         </div>
 
         <?php if ( ! empty( $product_collections ) && count( $product_collections ) > 1 ) : ?>
-            <!-- Onglets de collections -->
-            <div class="vpb-collection-tabs">
-                <button type="button" class="vpb-collection-tab active" data-collection="all">
-                    Tout
+            <!-- Onglets de collections (miniatures) -->
+            <div class="vpb-collection-tabs vpb-collection-tabs-thumbnails">
+                <button type="button"
+                        class="vpb-collection-tab vpb-collection-tab-all active"
+                        data-collection="all"
+                        title="Toutes les collections">
+                    <span class="vpb-tab-all-icon">Tout</span>
                 </button>
                 <?php foreach ( $product_collections as $collection ) : ?>
+                    <?php
+                    // Get thumbnail: collection thumbnail or first element image
+                    $tab_image = $collection->thumbnail_url;
+                    if ( empty( $tab_image ) ) {
+                        $first_elements = VPB_Collection::get_elements( $collection->id, array( 'limit' => 1 ) );
+                        if ( ! empty( $first_elements ) ) {
+                            $tab_image = $first_elements[0]->svg_file;
+                        }
+                    }
+                    ?>
                     <button type="button"
-                            class="vpb-collection-tab"
+                            class="vpb-collection-tab vpb-collection-tab-thumb"
                             data-collection="<?php echo esc_attr( $collection->id ); ?>"
-                            style="--collection-color: <?php echo esc_attr( $collection->color_hex ); ?>">
-                        <?php echo esc_html( $collection->name ); ?>
+                            style="--collection-color: <?php echo esc_attr( $collection->color_hex ); ?>; background-color: <?php echo esc_attr( $collection->color_hex ); ?>;"
+                            title="<?php echo esc_attr( $collection->name ); ?>">
+                        <?php if ( $tab_image ) : ?>
+                            <img src="<?php echo esc_url( $tab_image ); ?>" alt="<?php echo esc_attr( $collection->name ); ?>">
+                        <?php else : ?>
+                            <span class="vpb-tab-placeholder"></span>
+                        <?php endif; ?>
                     </button>
                 <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-
-        <!-- Filtre par couleur -->
-        <?php if ( count( $colors ) > 1 ) : ?>
-            <div class="vpb-color-filter">
-                <span class="vpb-filter-label">Couleur :</span>
-                <div class="vpb-color-tabs">
-                    <button type="button" class="vpb-color-tab active" data-color="all">
-                        Tout
-                    </button>
-                    <?php foreach ( $colors as $color ) : ?>
-                        <button type="button" class="vpb-color-tab" data-color="<?php echo esc_attr( $color ); ?>">
-                            <?php echo esc_html( ucfirst( $color ) ); ?>
-                        </button>
-                    <?php endforeach; ?>
-                </div>
             </div>
         <?php endif; ?>
 
