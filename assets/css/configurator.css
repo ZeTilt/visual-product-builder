@@ -59,6 +59,7 @@
     max-width: 100%;
     max-height: 120px;
     object-fit: contain;
+    pointer-events: none;
 }
 
 .vpb-preview-container.has-support-image .vpb-preview-canvas {
@@ -67,7 +68,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: none;
 }
 
 .vpb-preview-canvas {
