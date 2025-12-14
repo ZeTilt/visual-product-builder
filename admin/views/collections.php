@@ -8,18 +8,18 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <div class="wrap vpb-admin">
-    <h1 class="wp-heading-inline">Collections</h1>
-    <button type="button" class="page-title-action" id="vpb-add-collection">Ajouter une collection</button>
+    <h1 class="wp-heading-inline"><?php esc_html_e( 'Collections', 'visual-product-builder' ); ?></h1>
+    <button type="button" class="page-title-action" id="vpb-add-collection"><?php esc_html_e( 'Add Collection', 'visual-product-builder' ); ?></button>
     <?php if ( ! empty( $collections ) ) : ?>
-        <button type="button" class="page-title-action vpb-danger-action" id="vpb-purge-collections">Tout purger</button>
+        <button type="button" class="page-title-action vpb-danger-action" id="vpb-purge-collections"><?php esc_html_e( 'Purge All', 'visual-product-builder' ); ?></button>
     <?php endif; ?>
     <hr class="wp-header-end">
 
     <?php if ( empty( $collections ) ) : ?>
         <div class="vpb-empty-state">
-            <p>Aucune collection n'a été créée.</p>
-            <p>Les collections permettent d'organiser vos éléments (lettres, chiffres, symboles) et de les assigner à des produits.</p>
-            <button type="button" class="button button-primary" id="vpb-add-collection-empty">Créer votre première collection</button>
+            <p><?php esc_html_e( 'No collections have been created yet.', 'visual-product-builder' ); ?></p>
+            <p><?php esc_html_e( 'Collections allow you to organize your elements (letters, numbers, symbols) and assign them to products.', 'visual-product-builder' ); ?></p>
+            <button type="button" class="button button-primary" id="vpb-add-collection-empty"><?php esc_html_e( 'Create Your First Collection', 'visual-product-builder' ); ?></button>
         </div>
     <?php else : ?>
         <div class="vpb-collections-grid">
@@ -36,9 +36,14 @@ defined( 'ABSPATH' ) || exit;
                     <div class="vpb-collection-card-body">
                         <h3><?php echo esc_html( $collection->name ); ?></h3>
                         <p class="vpb-collection-meta">
-                            <span class="vpb-badge"><?php echo esc_html( $element_count ); ?> éléments</span>
+                            <span class="vpb-badge">
+                                <?php
+                                /* translators: %d: number of elements */
+                                echo esc_html( sprintf( _n( '%d element', '%d elements', $element_count, 'visual-product-builder' ), $element_count ) );
+                                ?>
+                            </span>
                             <?php if ( ! $collection->active ) : ?>
-                                <span class="vpb-badge vpb-badge-inactive">Inactive</span>
+                                <span class="vpb-badge vpb-badge-inactive"><?php esc_html_e( 'Inactive', 'visual-product-builder' ); ?></span>
                             <?php endif; ?>
                         </p>
                         <?php if ( $collection->description ) : ?>
@@ -50,7 +55,7 @@ defined( 'ABSPATH' ) || exit;
                                 data-id="<?php echo esc_attr( $collection->id ); ?>"
                                 data-name="<?php echo esc_attr( $collection->name ); ?>"
                                 data-color="<?php echo esc_attr( $collection->color_hex ); ?>">
-                            <span class="dashicons dashicons-upload"></span> Importer
+                            <span class="dashicons dashicons-upload"></span> <?php esc_html_e( 'Import', 'visual-product-builder' ); ?>
                         </button>
                         <button type="button" class="button vpb-edit-collection" data-id="<?php echo esc_attr( $collection->id ); ?>">
                             <span class="dashicons dashicons-edit"></span>
@@ -72,7 +77,7 @@ defined( 'ABSPATH' ) || exit;
 <div id="vpb-collection-modal" class="vpb-modal" style="display: none;">
     <div class="vpb-modal-content">
         <div class="vpb-modal-header">
-            <h2 id="vpb-collection-modal-title">Ajouter une collection</h2>
+            <h2 id="vpb-collection-modal-title"><?php esc_html_e( 'Add Collection', 'visual-product-builder' ); ?></h2>
             <button type="button" class="vpb-modal-close">&times;</button>
         </div>
         <div class="vpb-modal-body">
@@ -80,55 +85,55 @@ defined( 'ABSPATH' ) || exit;
                 <input type="hidden" name="id" id="vpb-collection-id" value="">
 
                 <div class="vpb-form-row">
-                    <label for="vpb-collection-name">Nom *</label>
+                    <label for="vpb-collection-name"><?php esc_html_e( 'Name', 'visual-product-builder' ); ?> *</label>
                     <input type="text" id="vpb-collection-name" name="name" required>
                 </div>
 
                 <div class="vpb-form-row">
-                    <label for="vpb-collection-slug">Slug</label>
-                    <input type="text" id="vpb-collection-slug" name="slug" placeholder="auto-généré">
+                    <label for="vpb-collection-slug"><?php esc_html_e( 'Slug', 'visual-product-builder' ); ?></label>
+                    <input type="text" id="vpb-collection-slug" name="slug" placeholder="<?php esc_attr_e( 'auto-generated', 'visual-product-builder' ); ?>">
                 </div>
 
                 <div class="vpb-form-row">
-                    <label for="vpb-collection-description">Description</label>
+                    <label for="vpb-collection-description"><?php esc_html_e( 'Description', 'visual-product-builder' ); ?></label>
                     <textarea id="vpb-collection-description" name="description" rows="3"></textarea>
                 </div>
 
                 <div class="vpb-form-row">
-                    <label for="vpb-collection-color">Couleur</label>
+                    <label for="vpb-collection-color"><?php esc_html_e( 'Color', 'visual-product-builder' ); ?></label>
                     <div class="vpb-color-picker-wrapper">
                         <input type="color" id="vpb-collection-color" name="color_hex" value="#4F9ED9">
                         <input type="text" id="vpb-collection-color-text" placeholder="#4F9ED9" maxlength="7">
                     </div>
-                    <p class="description">Couleur thème de la collection</p>
+                    <p class="description"><?php esc_html_e( 'Collection theme color', 'visual-product-builder' ); ?></p>
                 </div>
 
                 <div class="vpb-form-row">
-                    <label>Miniature</label>
+                    <label><?php esc_html_e( 'Thumbnail', 'visual-product-builder' ); ?></label>
                     <div class="vpb-image-upload">
                         <div id="vpb-collection-thumbnail-preview" class="vpb-image-preview"></div>
                         <input type="hidden" id="vpb-collection-thumbnail" name="thumbnail_url" value="">
-                        <button type="button" class="button" id="vpb-collection-thumbnail-btn">Choisir une image</button>
-                        <button type="button" class="button vpb-remove-image" id="vpb-collection-thumbnail-remove" style="display: none;">Supprimer</button>
+                        <button type="button" class="button" id="vpb-collection-thumbnail-btn"><?php esc_html_e( 'Choose Image', 'visual-product-builder' ); ?></button>
+                        <button type="button" class="button vpb-remove-image" id="vpb-collection-thumbnail-remove" style="display: none;"><?php esc_html_e( 'Remove', 'visual-product-builder' ); ?></button>
                     </div>
                 </div>
 
                 <div class="vpb-form-row">
-                    <label for="vpb-collection-order">Ordre d'affichage</label>
+                    <label for="vpb-collection-order"><?php esc_html_e( 'Display Order', 'visual-product-builder' ); ?></label>
                     <input type="number" id="vpb-collection-order" name="sort_order" value="0" min="0">
                 </div>
 
                 <div class="vpb-form-row">
                     <label>
                         <input type="checkbox" name="active" id="vpb-collection-active" checked>
-                        Collection active
+                        <?php esc_html_e( 'Active Collection', 'visual-product-builder' ); ?>
                     </label>
                 </div>
             </form>
         </div>
         <div class="vpb-modal-footer">
-            <button type="button" class="button vpb-modal-close">Annuler</button>
-            <button type="button" class="button button-primary" id="vpb-save-collection">Enregistrer</button>
+            <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
+            <button type="button" class="button button-primary" id="vpb-save-collection"><?php esc_html_e( 'Save', 'visual-product-builder' ); ?></button>
         </div>
     </div>
 </div>
@@ -137,7 +142,7 @@ defined( 'ABSPATH' ) || exit;
 <div id="vpb-import-modal" class="vpb-modal" style="display: none;">
     <div class="vpb-modal-content" style="max-width: 600px;">
         <div class="vpb-modal-header">
-            <h2>Importer des éléments dans <span id="vpb-import-collection-name"></span></h2>
+            <h2><?php esc_html_e( 'Import Elements into', 'visual-product-builder' ); ?> <span id="vpb-import-collection-name"></span></h2>
             <button type="button" class="vpb-modal-close">&times;</button>
         </div>
         <div class="vpb-modal-body">
@@ -146,35 +151,35 @@ defined( 'ABSPATH' ) || exit;
 
             <div class="vpb-import-dropzone" id="vpb-dropzone">
                 <span class="dashicons dashicons-upload" style="font-size: 48px; width: 48px; height: 48px; color: #c3c4c7;"></span>
-                <p>Glissez-déposez vos images ici</p>
+                <p><?php esc_html_e( 'Drag and drop your images here', 'visual-product-builder' ); ?></p>
                 <p><small>SVG, PNG, JPG, GIF, WebP</small></p>
-                <button type="button" class="button" id="vpb-select-files">Sélectionner des fichiers</button>
+                <button type="button" class="button" id="vpb-select-files"><?php esc_html_e( 'Select Files', 'visual-product-builder' ); ?></button>
                 <input type="file" id="vpb-file-input" multiple accept=".svg,.png,.jpg,.jpeg,.gif,.webp" style="display: none;">
             </div>
 
             <div id="vpb-import-preview" class="vpb-import-preview" style="display: none;">
-                <h4>Fichiers sélectionnés : <span id="vpb-file-count">0</span></h4>
+                <h4><?php esc_html_e( 'Selected Files:', 'visual-product-builder' ); ?> <span id="vpb-file-count">0</span></h4>
                 <div id="vpb-file-list" class="vpb-file-list"></div>
             </div>
 
             <div class="vpb-form-row" style="margin-top: 15px;">
-                <label for="vpb-import-category">Catégorie</label>
+                <label for="vpb-import-category"><?php esc_html_e( 'Category', 'visual-product-builder' ); ?></label>
                 <select id="vpb-import-category">
-                    <option value="letter">Lettre</option>
-                    <option value="number">Chiffre</option>
-                    <option value="symbol">Symbole</option>
+                    <option value="letter"><?php esc_html_e( 'Letter', 'visual-product-builder' ); ?></option>
+                    <option value="number"><?php esc_html_e( 'Number', 'visual-product-builder' ); ?></option>
+                    <option value="symbol"><?php esc_html_e( 'Symbol', 'visual-product-builder' ); ?></option>
                 </select>
             </div>
 
             <div class="vpb-form-row">
-                <label for="vpb-import-price">Prix par élément (€)</label>
+                <label for="vpb-import-price"><?php esc_html_e( 'Price per Element', 'visual-product-builder' ); ?> (<?php echo esc_html( get_woocommerce_currency_symbol() ); ?>)</label>
                 <input type="number" id="vpb-import-price" value="0" min="0" step="0.01">
             </div>
         </div>
         <div class="vpb-modal-footer">
-            <button type="button" class="button vpb-modal-close">Annuler</button>
+            <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
             <button type="button" class="button button-primary" id="vpb-start-import" disabled>
-                Importer <span id="vpb-import-btn-count"></span>
+                <?php esc_html_e( 'Import', 'visual-product-builder' ); ?> <span id="vpb-import-btn-count"></span>
             </button>
         </div>
     </div>
@@ -516,6 +521,37 @@ defined( 'ABSPATH' ) || exit;
 
 <script>
 jQuery(document).ready(function($) {
+    /**
+     * JAVASCRIPT STRINGS THAT NEED LOCALIZATION
+     *
+     * These strings should be passed via wp_localize_script() in the enqueue function.
+     * Add to class-vpb-admin.php in the script localization array:
+     *
+     * wp_localize_script('vpb-admin', 'vpbAdmin', [
+     *     'ajaxUrl' => admin_url('admin-ajax.php'),
+     *     'nonce' => wp_create_nonce('vpb_admin_nonce'),
+     *     'i18n' => [
+     *         'addCollection' => __('Add Collection', 'visual-product-builder'),
+     *         'editCollection' => __('Edit Collection', 'visual-product-builder'),
+     *         'saving' => __('Saving...', 'visual-product-builder'),
+     *         'save' => __('Save', 'visual-product-builder'),
+     *         'error' => __('Error', 'visual-product-builder'),
+     *         'connectionError' => __('Connection Error', 'visual-product-builder'),
+     *         'confirmDelete' => __('Do you really want to delete this collection? Elements will not be deleted but will no longer be assigned.', 'visual-product-builder'),
+     *         'confirmPurge' => __('Do you really want to DELETE EVERYTHING?\n\n• %d collections\n• All elements\n\nThis action is irreversible.', 'visual-product-builder'),
+     *         'deleting' => __('Deleting...', 'visual-product-builder'),
+     *         'purgeAll' => __('Purge All', 'visual-product-builder'),
+     *         'chooseThumbnail' => __('Choose Thumbnail', 'visual-product-builder'),
+     *         'useThisImage' => __('Use This Image', 'visual-product-builder'),
+     *         'importing' => __('Importing...', 'visual-product-builder'),
+     *         'importInProgress' => __('Import in progress...', 'visual-product-builder'),
+     *         'elementsImported' => __('%d element(s) imported', 'visual-product-builder'),
+     *         'errors' => __('%d error(s):', 'visual-product-builder'),
+     *         'networkError' => __('Network Error', 'visual-product-builder')
+     *     ]
+     * ]);
+     */
+
     // Modal functions
     function openModal() {
         $('#vpb-collection-modal').fadeIn(200);
@@ -529,7 +565,7 @@ jQuery(document).ready(function($) {
     function resetForm() {
         $('#vpb-collection-form')[0].reset();
         $('#vpb-collection-id').val('');
-        $('#vpb-collection-modal-title').text('Ajouter une collection');
+        $('#vpb-collection-modal-title').text(vpbAdmin.i18n.addCollection);
         $('#vpb-collection-thumbnail-preview').empty();
         $('#vpb-collection-thumbnail').val('');
         $('#vpb-collection-thumbnail-remove').hide();
@@ -594,7 +630,7 @@ jQuery(document).ready(function($) {
                         $('#vpb-collection-thumbnail-remove').show();
                     }
 
-                    $('#vpb-collection-modal-title').text('Modifier la collection');
+                    $('#vpb-collection-modal-title').text(vpbAdmin.i18n.editCollection);
                     openModal();
                 }
             }
@@ -604,7 +640,7 @@ jQuery(document).ready(function($) {
     // Save collection
     $('#vpb-save-collection').on('click', function() {
         var btn = $(this);
-        btn.prop('disabled', true).text('Enregistrement...');
+        btn.prop('disabled', true).text(vpbAdmin.i18n.saving);
 
         $.ajax({
             url: vpbAdmin.ajaxUrl,
@@ -625,20 +661,20 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert(response.data.message || 'Erreur');
-                    btn.prop('disabled', false).text('Enregistrer');
+                    alert(response.data.message || vpbAdmin.i18n.error);
+                    btn.prop('disabled', false).text(vpbAdmin.i18n.save);
                 }
             },
             error: function() {
-                alert('Erreur de connexion');
-                btn.prop('disabled', false).text('Enregistrer');
+                alert(vpbAdmin.i18n.connectionError);
+                btn.prop('disabled', false).text(vpbAdmin.i18n.save);
             }
         });
     });
 
     // Delete collection
     $('.vpb-delete-collection').on('click', function() {
-        if (!confirm('Voulez-vous vraiment supprimer cette collection ? Les éléments ne seront pas supprimés mais ne seront plus assignés.')) {
+        if (!confirm(vpbAdmin.i18n.confirmDelete)) {
             return;
         }
 
@@ -662,7 +698,7 @@ jQuery(document).ready(function($) {
                         }
                     });
                 } else {
-                    alert(response.data.message || 'Erreur');
+                    alert(response.data.message || vpbAdmin.i18n.error);
                 }
             }
         });
@@ -671,12 +707,12 @@ jQuery(document).ready(function($) {
     // Purge all collections and elements
     $('#vpb-purge-collections').on('click', function() {
         var count = $('.vpb-collection-card').length;
-        if (!confirm('Voulez-vous vraiment TOUT supprimer ?\n\n• ' + count + ' collections\n• Tous les éléments\n\nCette action est irréversible.')) {
+        if (!confirm(vpbAdmin.i18n.confirmPurge.replace('%d', count))) {
             return;
         }
 
         var btn = $(this);
-        btn.prop('disabled', true).text('Suppression...');
+        btn.prop('disabled', true).text(vpbAdmin.i18n.deleting);
 
         $.ajax({
             url: vpbAdmin.ajaxUrl,
@@ -689,13 +725,13 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert(response.data.message || 'Erreur');
-                    btn.prop('disabled', false).text('Tout supprimer');
+                    alert(response.data.message || vpbAdmin.i18n.error);
+                    btn.prop('disabled', false).text(vpbAdmin.i18n.purgeAll);
                 }
             },
             error: function() {
-                alert('Erreur de connexion');
-                btn.prop('disabled', false).text('Tout supprimer');
+                alert(vpbAdmin.i18n.connectionError);
+                btn.prop('disabled', false).text(vpbAdmin.i18n.purgeAll);
             }
         });
     });
@@ -705,8 +741,8 @@ jQuery(document).ready(function($) {
         e.preventDefault();
 
         var frame = wp.media({
-            title: 'Choisir une miniature',
-            button: { text: 'Utiliser cette image' },
+            title: vpbAdmin.i18n.chooseThumbnail,
+            button: { text: vpbAdmin.i18n.useThisImage },
             multiple: false
         });
 
@@ -847,7 +883,7 @@ jQuery(document).ready(function($) {
         if (importFiles.length === 0) return;
 
         var btn = $(this);
-        btn.prop('disabled', true).text('Import en cours...');
+        btn.prop('disabled', true).text(vpbAdmin.i18n.importing);
 
         var collectionId = $('#vpb-import-collection-id').val();
         var collectionColor = $('#vpb-import-collection-color').val();
@@ -861,7 +897,7 @@ jQuery(document).ready(function($) {
         // Show progress
         $('#vpb-import-preview').html(
             '<div class="vpb-import-progress">' +
-            '<p>Import en cours... <span id="vpb-progress-text">0/' + total + '</span></p>' +
+            '<p>' + vpbAdmin.i18n.importInProgress + ' <span id="vpb-progress-text">0/' + total + '</span></p>' +
             '<div class="vpb-progress-bar"><div class="vpb-progress-bar-fill" style="width: 0%"></div></div>' +
             '</div>'
         );
@@ -870,9 +906,9 @@ jQuery(document).ready(function($) {
         function uploadNext(index) {
             if (index >= importFiles.length) {
                 // Done
-                var message = completed + ' élément(s) importé(s)';
+                var message = vpbAdmin.i18n.elementsImported.replace('%d', completed);
                 if (errors.length > 0) {
-                    message += '\n' + errors.length + ' erreur(s):\n' + errors.join('\n');
+                    message += '\n' + vpbAdmin.i18n.errors.replace('%d', errors.length) + '\n' + errors.join('\n');
                 }
                 alert(message);
                 location.reload();
@@ -899,11 +935,11 @@ jQuery(document).ready(function($) {
                     if (response.success) {
                         completed++;
                     } else {
-                        errors.push(file.name + ': ' + (response.data.message || 'Erreur'));
+                        errors.push(file.name + ': ' + (response.data.message || vpbAdmin.i18n.error));
                     }
                 },
                 error: function() {
-                    errors.push(file.name + ': Erreur réseau');
+                    errors.push(file.name + ': ' + vpbAdmin.i18n.networkError);
                 },
                 complete: function() {
                     var progress = Math.round(((index + 1) / total) * 100);

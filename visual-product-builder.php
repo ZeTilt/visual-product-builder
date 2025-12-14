@@ -3,9 +3,9 @@
  * Plugin Name: Visual Product Builder
  * Plugin URI: https://github.com/your-repo/visual-product-builder
  * Description: WooCommerce add-on for visual product customization with linear element placement.
- * Version: 0.2.0
- * Author: ZeTilt
- * Author URI: https://zetilt.com
+ * Version: 1.0.0
+ * Author: Alré Web
+ * Author URI: https://alre-web.bzh
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: visual-product-builder
@@ -21,7 +21,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Plugin constants
-define( 'VPB_VERSION', '0.2.0' );
+define( 'VPB_VERSION', '1.0.0' );
 define( 'VPB_DB_VERSION', '2' );
 define( 'VPB_PLUGIN_FILE', __FILE__ );
 define( 'VPB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -45,10 +45,22 @@ function vpb_check_woocommerce() {
 function vpb_woocommerce_missing_notice() {
     ?>
     <div class="notice notice-error">
-        <p>Visual Product Builder nécessite que WooCommerce soit installé et activé.</p>
+        <p><?php esc_html_e( 'Visual Product Builder requires WooCommerce to be installed and activated.', 'visual-product-builder' ); ?></p>
     </div>
     <?php
 }
+
+/**
+ * Load plugin textdomain for translations
+ */
+function vpb_load_textdomain() {
+    load_plugin_textdomain(
+        'visual-product-builder',
+        false,
+        dirname( plugin_basename( __FILE__ ) ) . '/languages'
+    );
+}
+add_action( 'init', 'vpb_load_textdomain' );
 
 /**
  * Initialize the plugin

@@ -1,6 +1,6 @@
 <?php
 /**
- * Template du Configurateur
+ * Configurator Template
  *
  * @package VisualProductBuilder
  * @var WC_Product $product
@@ -20,52 +20,52 @@ defined( 'ABSPATH' ) || exit;
      data-base-price="<?php echo esc_attr( $product->get_price() ); ?>"
      data-support-image="<?php echo esc_url( $support_image ); ?>">
 
-    <!-- Zone de prévisualisation -->
+    <!-- Preview area -->
     <div class="vpb-preview-section">
         <div class="vpb-preview-container<?php echo $support_image ? ' has-support-image' : ''; ?>">
             <?php if ( $support_image ) : ?>
-                <img src="<?php echo esc_url( $support_image ); ?>" alt="Support" class="vpb-support-image">
+                <img src="<?php echo esc_url( $support_image ); ?>" alt="<?php esc_attr_e( 'Support', 'visual-product-builder' ); ?>" class="vpb-support-image">
             <?php endif; ?>
             <div class="vpb-preview-canvas <?php echo $support_image ? 'vpb-overlay-mode' : ''; ?>" id="vpb-preview">
                 <?php if ( ! $support_image ) : ?>
                     <div class="vpb-preview-placeholder">
-                        Votre création apparaîtra ici
+                        <?php esc_html_e( 'Your design will appear here', 'visual-product-builder' ); ?>
                     </div>
                 <?php endif; ?>
             </div>
         </div>
 
-        <!-- Contrôles -->
+        <!-- Controls -->
         <div class="vpb-controls">
-            <button type="button" class="vpb-btn-icon" id="vpb-undo" disabled title="Annuler">
+            <button type="button" class="vpb-btn-icon" id="vpb-undo" disabled title="<?php esc_attr_e( 'Undo', 'visual-product-builder' ); ?>">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 0 1 5 5v2M3 10l5-5M3 10l5 5"/></svg>
             </button>
-            <button type="button" class="vpb-btn-icon" id="vpb-reset" title="Recommencer">
+            <button type="button" class="vpb-btn-icon" id="vpb-reset" title="<?php esc_attr_e( 'Start over', 'visual-product-builder' ); ?>">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
             </button>
         </div>
     </div>
 
-    <!-- Panneau de configuration -->
+    <!-- Configuration panel -->
     <div class="vpb-config-section">
-        <!-- Statut -->
+        <!-- Status -->
         <div class="vpb-status-bar">
             <span class="vpb-counter">
                 <span id="vpb-count">0</span> / <?php echo esc_html( $limit ); ?>
             </span>
             <span class="vpb-price-display">
-                Total : <strong id="vpb-total-price"><?php echo wc_price( $product->get_price() ); ?></strong>
+                <?php esc_html_e( 'Total:', 'visual-product-builder' ); ?> <strong id="vpb-total-price"><?php echo wc_price( $product->get_price() ); ?></strong>
             </span>
         </div>
 
         <?php if ( ! empty( $product_collections ) && count( $product_collections ) > 1 ) : ?>
-            <!-- Onglets de collections (miniatures) -->
+            <!-- Collection tabs (thumbnails) -->
             <div class="vpb-collection-tabs vpb-collection-tabs-thumbnails">
                 <button type="button"
                         class="vpb-collection-tab vpb-collection-tab-all active"
                         data-collection="all"
-                        title="Toutes les collections">
-                    <span class="vpb-tab-all-icon">Tout</span>
+                        title="<?php esc_attr_e( 'All collections', 'visual-product-builder' ); ?>">
+                    <span class="vpb-tab-all-icon"><?php esc_html_e( 'All', 'visual-product-builder' ); ?></span>
                 </button>
                 <?php foreach ( $product_collections as $collection ) : ?>
                     <?php
@@ -122,7 +122,7 @@ defined( 'ABSPATH' ) || exit;
             <?php endforeach; ?>
         </div>
 
-        <!-- Formulaire d'ajout au panier -->
+        <!-- Add to cart form -->
         <form id="vpb-add-to-cart-form" method="post">
             <input type="hidden" name="vpb_configuration" id="vpb-configuration-input" value="">
             <input type="hidden" name="vpb_image_data" id="vpb-image-input" value="">
@@ -130,11 +130,11 @@ defined( 'ABSPATH' ) || exit;
             <input type="hidden" name="add-to-cart" value="<?php echo esc_attr( $product_id ); ?>">
 
             <button type="submit" class="vpb-btn vpb-btn-primary vpb-add-to-cart" disabled>
-                Ajouter au panier - <span id="vpb-cart-price"><?php echo wc_price( $product->get_price() ); ?></span>
+                <?php esc_html_e( 'Add to cart', 'visual-product-builder' ); ?> - <span id="vpb-cart-price"><?php echo wc_price( $product->get_price() ); ?></span>
             </button>
         </form>
     </div>
 
-    <!-- Container des notifications -->
+    <!-- Toast container -->
     <div id="vpb-toast-container"></div>
 </div>

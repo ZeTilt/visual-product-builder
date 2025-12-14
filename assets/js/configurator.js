@@ -393,6 +393,7 @@
      * Handle drag start
      */
     function handleDragStart(e) {
+        console.log('dragstart', e.currentTarget);
         const index = parseInt(e.currentTarget.dataset.index);
         state.dragIndex = index;
         e.currentTarget.classList.add('vpb-dragging');

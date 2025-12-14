@@ -64,8 +64,8 @@ class VPB_Admin {
 
         add_submenu_page(
             'vpb-settings',
-            'Bibliothèque d\'éléments',
-            'Éléments',
+            __( 'Element Library', 'visual-product-builder' ),
+            __( 'Elements', 'visual-product-builder' ),
             'manage_woocommerce',
             'vpb-elements',
             array( $this, 'render_elements_page' )
@@ -73,8 +73,8 @@ class VPB_Admin {
 
         add_submenu_page(
             'vpb-settings',
-            'Réglages',
-            'Réglages',
+            __( 'Settings', 'visual-product-builder' ),
+            __( 'Settings', 'visual-product-builder' ),
             'manage_woocommerce',
             'vpb-settings',
             array( $this, 'render_settings_page' )
@@ -112,11 +112,21 @@ class VPB_Admin {
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'nonce'   => wp_create_nonce( 'vpb_admin_nonce' ),
             'i18n'    => array(
-                'confirmDelete' => 'Voulez-vous vraiment supprimer cet élément ?',
-                'saved'         => 'Enregistré avec succès',
-                'error'         => 'Une erreur est survenue',
-                'selectImage'   => 'Sélectionner une image',
-                'useImage'      => 'Utiliser cette image',
+                'confirmDelete'       => __( 'Are you sure you want to delete this element?', 'visual-product-builder' ),
+                'saved'               => __( 'Saved successfully', 'visual-product-builder' ),
+                'error'               => __( 'An error occurred', 'visual-product-builder' ),
+                'selectImage'         => __( 'Select an image', 'visual-product-builder' ),
+                'useImage'            => __( 'Use this image', 'visual-product-builder' ),
+                'addElement'          => __( 'Add Element', 'visual-product-builder' ),
+                'editElement'         => __( 'Edit Element', 'visual-product-builder' ),
+                'saving'              => __( 'Saving...', 'visual-product-builder' ),
+                'save'                => __( 'Save', 'visual-product-builder' ),
+                'connectionError'     => __( 'Connection error', 'visual-product-builder' ),
+                'selected'            => __( 'selected', 'visual-product-builder' ),
+                'elementsSelected'    => __( 'elements selected', 'visual-product-builder' ),
+                'confirmImportSample' => __( 'Import sample data? This will add elements to your library.', 'visual-product-builder' ),
+                'importing'           => __( 'Importing...', 'visual-product-builder' ),
+                'importSampleData'    => __( 'Import Sample Data', 'visual-product-builder' ),
             ),
         ) );
     }
@@ -126,7 +136,7 @@ class VPB_Admin {
      */
     public function render_settings_page() {
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_die( 'Vous n\'avez pas la permission d\'accéder à cette page.' );
+            wp_die( esc_html__( 'You do not have permission to access this page.', 'visual-product-builder' ) );
         }
 
         // Handle custom CSS save
@@ -134,7 +144,7 @@ class VPB_Admin {
             if ( wp_verify_nonce( $_POST['vpb_css_nonce'], 'vpb_save_custom_css' ) ) {
                 $custom_css = isset( $_POST['vpb_custom_css'] ) ? wp_strip_all_tags( $_POST['vpb_custom_css'] ) : '';
                 update_option( 'vpb_custom_css', $custom_css );
-                add_settings_error( 'vpb_messages', 'vpb_css_saved', 'CSS personnalisé enregistré.', 'success' );
+                add_settings_error( 'vpb_messages', 'vpb_css_saved', __( 'Custom CSS saved.', 'visual-product-builder' ), 'success' );
             }
         }
 
@@ -148,7 +158,7 @@ class VPB_Admin {
      */
     public function render_elements_page() {
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_die( 'Vous n\'avez pas la permission d\'accéder à cette page.' );
+            wp_die( esc_html__( 'You do not have permission to access this page.', 'visual-product-builder' ) );
         }
 
         $elements = VPB_Library::get_elements();
@@ -163,7 +173,7 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $id   = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
@@ -182,7 +192,7 @@ class VPB_Admin {
 
         // Validate required fields
         if ( empty( $data['name'] ) || empty( $data['svg_file'] ) ) {
-            wp_send_json_error( array( 'message' => 'Le nom et l\'image sont requis' ) );
+            wp_send_json_error( array( 'message' => __( 'Name and image are required', 'visual-product-builder' ) ) );
         }
 
         // Auto-generate slug if empty
@@ -201,11 +211,11 @@ class VPB_Admin {
 
         if ( $result ) {
             wp_send_json_success( array(
-                'message' => 'Élément enregistré',
+                'message' => __( 'Element saved', 'visual-product-builder' ),
                 'id'      => $id,
             ) );
         } else {
-            wp_send_json_error( array( 'message' => 'Échec de l\'enregistrement' ) );
+            wp_send_json_error( array( 'message' => __( 'Save failed', 'visual-product-builder' ) ) );
         }
     }
 
@@ -216,21 +226,21 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
 
         if ( ! $id ) {
-            wp_send_json_error( array( 'message' => 'ID d\'élément invalide' ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid element ID', 'visual-product-builder' ) ) );
         }
 
         $result = VPB_Library::delete_element( $id );
 
         if ( $result ) {
-            wp_send_json_success( array( 'message' => 'Élément supprimé' ) );
+            wp_send_json_success( array( 'message' => __( 'Element deleted', 'visual-product-builder' ) ) );
         } else {
-            wp_send_json_error( array( 'message' => 'Échec de la suppression' ) );
+            wp_send_json_error( array( 'message' => __( 'Delete failed', 'visual-product-builder' ) ) );
         }
     }
 
@@ -241,13 +251,13 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
 
         if ( ! $id ) {
-            wp_send_json_error( array( 'message' => 'ID d\'élément invalide' ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid element ID', 'visual-product-builder' ) ) );
         }
 
         $element = VPB_Library::get_element( $id );
@@ -255,7 +265,7 @@ class VPB_Admin {
         if ( $element ) {
             wp_send_json_success( $element );
         } else {
-            wp_send_json_error( array( 'message' => 'Élément non trouvé' ) );
+            wp_send_json_error( array( 'message' => __( 'Element not found', 'visual-product-builder' ) ) );
         }
     }
 
@@ -266,13 +276,14 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $result = VPB_Sample_Data::import();
 
         $message = sprintf(
-            '%d collections et %d éléments importés avec succès',
+            /* translators: %1$d: number of collections, %2$d: number of elements */
+            __( '%1$d collections and %2$d elements imported successfully', 'visual-product-builder' ),
             $result['collections'],
             $result['elements']
         );
@@ -291,7 +302,7 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $ids   = isset( $_POST['ids'] ) ? array_map( 'absint', (array) $_POST['ids'] ) : array();
@@ -299,7 +310,7 @@ class VPB_Admin {
         $mode  = isset( $_POST['mode'] ) ? sanitize_key( $_POST['mode'] ) : 'set';
 
         if ( empty( $ids ) ) {
-            wp_send_json_error( array( 'message' => 'Aucun élément sélectionné' ) );
+            wp_send_json_error( array( 'message' => __( 'No element selected', 'visual-product-builder' ) ) );
         }
 
         $updated = 0;
@@ -325,7 +336,8 @@ class VPB_Admin {
         }
 
         wp_send_json_success( array(
-            'message' => $updated . ' prix mis à jour',
+            /* translators: %d: number of prices updated */
+            'message' => sprintf( __( '%d prices updated', 'visual-product-builder' ), $updated ),
             'updated' => $updated,
         ) );
     }
@@ -335,7 +347,7 @@ class VPB_Admin {
      */
     public function render_collections_page() {
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_die( 'Vous n\'avez pas la permission d\'accéder à cette page.' );
+            wp_die( esc_html__( 'You do not have permission to access this page.', 'visual-product-builder' ) );
         }
 
         $collections = VPB_Collection::get_collections();
@@ -350,7 +362,7 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $id   = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
@@ -366,7 +378,7 @@ class VPB_Admin {
 
         // Validate required fields
         if ( empty( $data['name'] ) ) {
-            wp_send_json_error( array( 'message' => 'Le nom est requis' ) );
+            wp_send_json_error( array( 'message' => __( 'Name is required', 'visual-product-builder' ) ) );
         }
 
         if ( $id > 0 ) {
@@ -378,11 +390,11 @@ class VPB_Admin {
 
         if ( $result ) {
             wp_send_json_success( array(
-                'message' => 'Collection enregistrée',
+                'message' => __( 'Collection saved', 'visual-product-builder' ),
                 'id'      => $id,
             ) );
         } else {
-            wp_send_json_error( array( 'message' => 'Échec de l\'enregistrement' ) );
+            wp_send_json_error( array( 'message' => __( 'Save failed', 'visual-product-builder' ) ) );
         }
     }
 
@@ -393,21 +405,21 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
 
         if ( ! $id ) {
-            wp_send_json_error( array( 'message' => 'ID de collection invalide' ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid collection ID', 'visual-product-builder' ) ) );
         }
 
         $result = VPB_Collection::delete_collection( $id );
 
         if ( $result ) {
-            wp_send_json_success( array( 'message' => 'Collection supprimée' ) );
+            wp_send_json_success( array( 'message' => __( 'Collection deleted', 'visual-product-builder' ) ) );
         } else {
-            wp_send_json_error( array( 'message' => 'Échec de la suppression' ) );
+            wp_send_json_error( array( 'message' => __( 'Delete failed', 'visual-product-builder' ) ) );
         }
     }
 
@@ -418,7 +430,7 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         global $wpdb;
@@ -435,7 +447,7 @@ class VPB_Admin {
         $product_collections_table = $wpdb->prefix . 'vpb_product_collections';
         $wpdb->query( "TRUNCATE TABLE $product_collections_table" );
 
-        wp_send_json_success( array( 'message' => 'Toutes les collections et éléments ont été supprimés' ) );
+        wp_send_json_success( array( 'message' => __( 'All collections and elements have been deleted', 'visual-product-builder' ) ) );
     }
 
     /**
@@ -445,11 +457,11 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         if ( empty( $_FILES['file'] ) ) {
-            wp_send_json_error( array( 'message' => 'Aucun fichier reçu' ) );
+            wp_send_json_error( array( 'message' => __( 'No file received', 'visual-product-builder' ) ) );
         }
 
         $file = $_FILES['file'];
@@ -459,7 +471,8 @@ class VPB_Admin {
         $ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
 
         if ( ! in_array( $ext, $allowed_extensions, true ) ) {
-            wp_send_json_error( array( 'message' => 'Extension non autorisée: ' . $ext ) );
+            /* translators: %s: file extension */
+            wp_send_json_error( array( 'message' => sprintf( __( 'Extension not allowed: %s', 'visual-product-builder' ), $ext ) ) );
         }
 
         // Get element name from filename (without extension)
@@ -516,15 +529,15 @@ class VPB_Admin {
 
             if ( $element_id ) {
                 wp_send_json_success( array(
-                    'message'    => 'Élément importé',
+                    'message'    => __( 'Element imported', 'visual-product-builder' ),
                     'element_id' => $element_id,
                     'name'       => $element_name,
                 ) );
             } else {
-                wp_send_json_error( array( 'message' => 'Erreur lors de la création de l\'élément' ) );
+                wp_send_json_error( array( 'message' => __( 'Error creating element', 'visual-product-builder' ) ) );
             }
         } else {
-            wp_send_json_error( array( 'message' => $movefile['error'] ?? 'Erreur d\'upload' ) );
+            wp_send_json_error( array( 'message' => $movefile['error'] ?? __( 'Upload error', 'visual-product-builder' ) ) );
         }
     }
 
@@ -535,13 +548,13 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
 
         if ( ! $id ) {
-            wp_send_json_error( array( 'message' => 'ID de collection invalide' ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid collection ID', 'visual-product-builder' ) ) );
         }
 
         $collection = VPB_Collection::get_collection( $id );
@@ -549,7 +562,7 @@ class VPB_Admin {
         if ( $collection ) {
             wp_send_json_success( $collection );
         } else {
-            wp_send_json_error( array( 'message' => 'Collection non trouvée' ) );
+            wp_send_json_error( array( 'message' => __( 'Collection not found', 'visual-product-builder' ) ) );
         }
     }
 
@@ -560,14 +573,14 @@ class VPB_Admin {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
-            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+            wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
         $ids           = isset( $_POST['ids'] ) ? array_map( 'absint', (array) $_POST['ids'] ) : array();
         $collection_id = isset( $_POST['collection_id'] ) && $_POST['collection_id'] !== '' ? absint( $_POST['collection_id'] ) : null;
 
         if ( empty( $ids ) ) {
-            wp_send_json_error( array( 'message' => 'Aucun élément sélectionné' ) );
+            wp_send_json_error( array( 'message' => __( 'No element selected', 'visual-product-builder' ) ) );
         }
 
         $updated = 0;
@@ -580,7 +593,8 @@ class VPB_Admin {
         }
 
         wp_send_json_success( array(
-            'message' => $updated . ' éléments assignés',
+            /* translators: %d: number of elements assigned */
+            'message' => sprintf( __( '%d elements assigned', 'visual-product-builder' ), $updated ),
             'updated' => $updated,
         ) );
     }
@@ -612,10 +626,10 @@ class VPB_Admin {
         $support_image       = get_post_meta( $post->ID, '_vpb_support_image', true );
         ?>
 
-        <!-- Image de support -->
+        <!-- Support image -->
         <p>
-            <strong>Image de support</strong><br>
-            <small>Image sur laquelle les éléments seront placés.</small>
+            <strong><?php esc_html_e( 'Support Image', 'visual-product-builder' ); ?></strong><br>
+            <small><?php esc_html_e( 'Image on which elements will be placed.', 'visual-product-builder' ); ?></small>
         </p>
         <div class="vpb-support-image-field" style="margin-bottom: 15px;">
             <div id="vpb-support-image-preview" style="margin-bottom: 10px; <?php echo empty( $support_image ) ? 'display: none;' : ''; ?>">
@@ -625,10 +639,10 @@ class VPB_Admin {
             </div>
             <input type="hidden" name="vpb_support_image" id="vpb-support-image-input" value="<?php echo esc_url( $support_image ); ?>">
             <button type="button" class="button" id="vpb-support-image-btn">
-                <?php echo $support_image ? 'Changer l\'image' : 'Choisir une image'; ?>
+                <?php echo $support_image ? esc_html__( 'Change image', 'visual-product-builder' ) : esc_html__( 'Choose an image', 'visual-product-builder' ); ?>
             </button>
             <button type="button" class="button" id="vpb-support-image-remove" style="<?php echo empty( $support_image ) ? 'display: none;' : ''; ?>">
-                Supprimer
+                <?php esc_html_e( 'Remove', 'visual-product-builder' ); ?>
             </button>
         </div>
 
@@ -636,12 +650,12 @@ class VPB_Admin {
 
         <!-- Collections -->
         <p>
-            <strong>Collections disponibles</strong><br>
-            <small>Sélectionnez les collections à afficher pour ce produit.</small>
+            <strong><?php esc_html_e( 'Available Collections', 'visual-product-builder' ); ?></strong><br>
+            <small><?php esc_html_e( 'Select collections to display for this product.', 'visual-product-builder' ); ?></small>
         </p>
 
         <?php if ( empty( $collections ) ) : ?>
-            <p><em>Aucune collection disponible. <a href="<?php echo esc_url( admin_url( 'admin.php?page=vpb-collections' ) ); ?>">Créer une collection</a></em></p>
+            <p><em><?php esc_html_e( 'No collections available.', 'visual-product-builder' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=vpb-collections' ) ); ?>"><?php esc_html_e( 'Create a collection', 'visual-product-builder' ); ?></a></em></p>
         <?php else : ?>
             <div style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fff;">
                 <?php foreach ( $collections as $collection ) : ?>
@@ -652,7 +666,10 @@ class VPB_Admin {
                                <?php checked( in_array( $collection->id, $selected_ids, true ) ); ?>>
                         <span style="display: inline-block; width: 12px; height: 12px; background: <?php echo esc_attr( $collection->color_hex ); ?>; border-radius: 2px; vertical-align: middle; margin-right: 5px;"></span>
                         <?php echo esc_html( $collection->name ); ?>
-                        <small>(<?php echo esc_html( VPB_Collection::get_element_count( $collection->id ) ); ?> éléments)</small>
+                        <small>(<?php
+                            /* translators: %d: number of elements */
+                            printf( esc_html__( '%d elements', 'visual-product-builder' ), VPB_Collection::get_element_count( $collection->id ) );
+                        ?>)</small>
                     </label>
                 <?php endforeach; ?>
             </div>
@@ -660,19 +677,26 @@ class VPB_Admin {
 
         <script>
         jQuery(document).ready(function($) {
+            var vpbMetaboxI18n = {
+                selectImage: '<?php echo esc_js( __( 'Choose a support image', 'visual-product-builder' ) ); ?>',
+                useImage: '<?php echo esc_js( __( 'Use this image', 'visual-product-builder' ) ); ?>',
+                changeImage: '<?php echo esc_js( __( 'Change image', 'visual-product-builder' ) ); ?>',
+                chooseImage: '<?php echo esc_js( __( 'Choose an image', 'visual-product-builder' ) ); ?>'
+            };
+
             // Support image upload
             $('#vpb-support-image-btn').on('click', function(e) {
                 e.preventDefault();
                 var frame = wp.media({
-                    title: 'Choisir une image de support',
-                    button: { text: 'Utiliser cette image' },
+                    title: vpbMetaboxI18n.selectImage,
+                    button: { text: vpbMetaboxI18n.useImage },
                     multiple: false
                 });
                 frame.on('select', function() {
                     var attachment = frame.state().get('selection').first().toJSON();
                     $('#vpb-support-image-input').val(attachment.url);
                     $('#vpb-support-image-preview').html('<img src="' + attachment.url + '" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">').show();
-                    $('#vpb-support-image-btn').text('Changer l\'image');
+                    $('#vpb-support-image-btn').text(vpbMetaboxI18n.changeImage);
                     $('#vpb-support-image-remove').show();
                 });
                 frame.open();
@@ -682,7 +706,7 @@ class VPB_Admin {
             $('#vpb-support-image-remove').on('click', function() {
                 $('#vpb-support-image-input').val('');
                 $('#vpb-support-image-preview').empty().hide();
-                $('#vpb-support-image-btn').text('Choisir une image');
+                $('#vpb-support-image-btn').text(vpbMetaboxI18n.chooseImage);
                 $(this).hide();
             });
         });

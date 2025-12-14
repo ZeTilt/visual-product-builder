@@ -1,6 +1,6 @@
 <?php
 /**
- * Page Réglages Admin
+ * Admin Settings Page
  *
  * @package VisualProductBuilder
  */
@@ -9,59 +9,59 @@ defined( 'ABSPATH' ) || exit;
 ?>
 
 <div class="wrap">
-    <h1>Visual Product Builder - Réglages</h1>
+    <h1><?php esc_html_e( 'Visual Product Builder - Settings', 'visual-product-builder' ); ?></h1>
 
     <div class="vpb-admin-header">
-        <p>Configurez votre Visual Product Builder.</p>
+        <p><?php esc_html_e( 'Configure your Visual Product Builder.', 'visual-product-builder' ); ?></p>
     </div>
 
     <div class="vpb-admin-content">
         <div class="vpb-card">
-            <h2>Démarrage rapide</h2>
+            <h2><?php esc_html_e( 'Quick Start', 'visual-product-builder' ); ?></h2>
             <ol>
-                <li>Ajoutez des éléments à votre bibliothèque (menu Éléments)</li>
-                <li>Ajoutez le shortcode sur votre page produit :
+                <li><?php esc_html_e( 'Add elements to your library (Elements menu)', 'visual-product-builder' ); ?></li>
+                <li><?php esc_html_e( 'Add the shortcode to your product page:', 'visual-product-builder' ); ?>
                     <code>[vpb_configurator product_id="123" limit="10"]</code>
                 </li>
-                <li>Personnalisez l'apparence via le CSS</li>
+                <li><?php esc_html_e( 'Customize the appearance via CSS', 'visual-product-builder' ); ?></li>
             </ol>
         </div>
 
         <div class="vpb-card">
-            <h2>Données d'exemple</h2>
-            <p>Importez des éléments d'exemple (lettres A-Z en bleu et beige) pour démarrer rapidement.</p>
+            <h2><?php esc_html_e( 'Sample Data', 'visual-product-builder' ); ?></h2>
+            <p><?php esc_html_e( 'Import sample elements (letters A-Z in blue and beige) to get started quickly.', 'visual-product-builder' ); ?></p>
             <?php if ( VPB_Sample_Data::is_imported() ) : ?>
                 <p class="vpb-notice vpb-notice-info">
-                    Les données d'exemple ont déjà été importées.
+                    <?php esc_html_e( 'Sample data has already been imported.', 'visual-product-builder' ); ?>
                 </p>
             <?php endif; ?>
             <p>
                 <button type="button" class="button button-primary" id="vpb-import-sample-data">
-                    Importer les données d'exemple
+                    <?php esc_html_e( 'Import Sample Data', 'visual-product-builder' ); ?>
                 </button>
                 <span id="vpb-import-status"></span>
             </p>
         </div>
 
         <div class="vpb-card">
-            <h2>Paramètres du shortcode</h2>
+            <h2><?php esc_html_e( 'Shortcode Parameters', 'visual-product-builder' ); ?></h2>
             <table class="widefat">
                 <thead>
                     <tr>
-                        <th>Paramètre</th>
-                        <th>Description</th>
-                        <th>Défaut</th>
+                        <th><?php esc_html_e( 'Parameter', 'visual-product-builder' ); ?></th>
+                        <th><?php esc_html_e( 'Description', 'visual-product-builder' ); ?></th>
+                        <th><?php esc_html_e( 'Default', 'visual-product-builder' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><code>product_id</code></td>
-                        <td>ID du produit WooCommerce (auto-détecté sur les pages produit)</td>
+                        <td><?php esc_html_e( 'WooCommerce product ID (auto-detected on product pages)', 'visual-product-builder' ); ?></td>
                         <td>0</td>
                     </tr>
                     <tr>
                         <td><code>limit</code></td>
-                        <td>Nombre maximum d'éléments autorisés</td>
+                        <td><?php esc_html_e( 'Maximum number of elements allowed', 'visual-product-builder' ); ?></td>
                         <td>10</td>
                     </tr>
                 </tbody>
@@ -69,23 +69,23 @@ defined( 'ABSPATH' ) || exit;
         </div>
 
         <div class="vpb-card">
-            <h2>Statut système</h2>
+            <h2><?php esc_html_e( 'System Status', 'visual-product-builder' ); ?></h2>
             <table class="widefat">
                 <tbody>
                     <tr>
-                        <td>Version du plugin</td>
+                        <td><?php esc_html_e( 'Plugin version', 'visual-product-builder' ); ?></td>
                         <td><strong><?php echo esc_html( VPB_VERSION ); ?></strong></td>
                     </tr>
                     <tr>
-                        <td>Version WooCommerce</td>
+                        <td><?php esc_html_e( 'WooCommerce version', 'visual-product-builder' ); ?></td>
                         <td><strong><?php echo esc_html( defined( 'WC_VERSION' ) ? WC_VERSION : 'N/A' ); ?></strong></td>
                     </tr>
                     <tr>
-                        <td>Version PHP</td>
+                        <td><?php esc_html_e( 'PHP version', 'visual-product-builder' ); ?></td>
                         <td><strong><?php echo esc_html( phpversion() ); ?></strong></td>
                     </tr>
                     <tr>
-                        <td>Éléments dans la bibliothèque</td>
+                        <td><?php esc_html_e( 'Elements in library', 'visual-product-builder' ); ?></td>
                         <td><strong><?php echo esc_html( count( VPB_Library::get_elements() ) ); ?></strong></td>
                     </tr>
                 </tbody>
@@ -93,16 +93,19 @@ defined( 'ABSPATH' ) || exit;
         </div>
 
         <div class="vpb-card vpb-card-full">
-            <h2>CSS personnalisé</h2>
-            <p>Ajoutez du CSS personnalisé pour modifier l'apparence du configurateur.</p>
+            <h2><?php esc_html_e( 'Custom CSS', 'visual-product-builder' ); ?></h2>
+            <p><?php esc_html_e( 'Add custom CSS to modify the configurator appearance.', 'visual-product-builder' ); ?></p>
             <form method="post" action="">
                 <?php wp_nonce_field( 'vpb_save_custom_css', 'vpb_css_nonce' ); ?>
                 <textarea name="vpb_custom_css" id="vpb-custom-css" rows="15" class="large-text code"><?php echo esc_textarea( get_option( 'vpb_custom_css', '' ) ); ?></textarea>
                 <p class="description">
-                    Exemple : <code>.vpb-configurator { background: #f5f5f5; }</code>
+                    <?php
+                    /* translators: %s: CSS example */
+                    printf( esc_html__( 'Example: %s', 'visual-product-builder' ), '<code>.vpb-configurator { background: #f5f5f5; }</code>' );
+                    ?>
                 </p>
                 <p style="margin-top: 15px;">
-                    <button type="submit" name="vpb_save_css" class="button button-primary">Enregistrer le CSS</button>
+                    <button type="submit" name="vpb_save_css" class="button button-primary"><?php esc_html_e( 'Save CSS', 'visual-product-builder' ); ?></button>
                 </p>
             </form>
         </div>

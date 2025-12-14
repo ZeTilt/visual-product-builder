@@ -1,6 +1,6 @@
 <?php
 /**
- * Page Bibliothèque d'éléments Admin
+ * Element Library Admin Page
  *
  * @package VisualProductBuilder
  */
@@ -20,17 +20,17 @@ if ( $collection_filter ) {
 ?>
 
 <div class="wrap vpb-admin">
-    <h1 class="wp-heading-inline">Bibliothèque d'éléments</h1>
-    <button type="button" class="page-title-action" id="vpb-add-element">Ajouter un élément</button>
-    <button type="button" class="page-title-action" id="vpb-import-sample">Importer données exemple</button>
+    <h1 class="wp-heading-inline"><?php esc_html_e( 'Element Library', 'visual-product-builder' ); ?></h1>
+    <button type="button" class="page-title-action" id="vpb-add-element"><?php esc_html_e( 'Add Element', 'visual-product-builder' ); ?></button>
+    <button type="button" class="page-title-action" id="vpb-import-sample"><?php esc_html_e( 'Import Sample Data', 'visual-product-builder' ); ?></button>
     <hr class="wp-header-end">
 
     <!-- Filtres -->
     <div class="vpb-filters">
-        <label for="vpb-filter-collection">Collection :</label>
+        <label for="vpb-filter-collection"><?php esc_html_e( 'Collection:', 'visual-product-builder' ); ?></label>
         <select id="vpb-filter-collection">
-            <option value="">Toutes les collections</option>
-            <option value="0" <?php selected( $collection_filter, 0 ); ?>>Sans collection</option>
+            <option value=""><?php esc_html_e( 'All collections', 'visual-product-builder' ); ?></option>
+            <option value="0" <?php selected( $collection_filter, 0 ); ?>><?php esc_html_e( 'No collection', 'visual-product-builder' ); ?></option>
             <?php foreach ( $collections as $col ) : ?>
                 <option value="<?php echo esc_attr( $col->id ); ?>" <?php selected( $collection_filter, $col->id ); ?>>
                     <?php echo esc_html( $col->name ); ?>
@@ -42,36 +42,36 @@ if ( $collection_filter ) {
     <div class="vpb-elements-grid">
         <?php if ( empty( $elements ) ) : ?>
             <div class="vpb-empty-state">
-                <p>Aucun élément trouvé.</p>
+                <p><?php esc_html_e( 'No elements found.', 'visual-product-builder' ); ?></p>
                 <?php if ( $collection_filter ) : ?>
-                    <p><a href="<?php echo esc_url( admin_url( 'admin.php?page=vpb-elements' ) ); ?>">Voir tous les éléments</a></p>
+                    <p><a href="<?php echo esc_url( admin_url( 'admin.php?page=vpb-elements' ) ); ?>"><?php esc_html_e( 'View all elements', 'visual-product-builder' ); ?></a></p>
                 <?php else : ?>
-                    <p>Cliquez sur "Ajouter un élément" ou "Importer données exemple" pour commencer.</p>
+                    <p><?php esc_html_e( 'Click "Add Element" or "Import Sample Data" to get started.', 'visual-product-builder' ); ?></p>
                 <?php endif; ?>
             </div>
         <?php else : ?>
             <!-- Barre d'actions en masse -->
             <div class="vpb-bulk-actions" style="display: none;">
-                <span class="vpb-selected-count">0 sélectionné(s)</span>
-                <button type="button" class="button" id="vpb-bulk-price">Modifier le prix</button>
-                <button type="button" class="button" id="vpb-bulk-collection">Assigner collection</button>
-                <button type="button" class="button" id="vpb-bulk-deselect">Désélectionner</button>
+                <span class="vpb-selected-count">0 <?php esc_html_e( 'selected', 'visual-product-builder' ); ?></span>
+                <button type="button" class="button" id="vpb-bulk-price"><?php esc_html_e( 'Edit price', 'visual-product-builder' ); ?></button>
+                <button type="button" class="button" id="vpb-bulk-collection"><?php esc_html_e( 'Assign collection', 'visual-product-builder' ); ?></button>
+                <button type="button" class="button" id="vpb-bulk-deselect"><?php esc_html_e( 'Deselect', 'visual-product-builder' ); ?></button>
             </div>
 
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
                         <th style="width: 40px;">
-                            <input type="checkbox" id="vpb-select-all" title="Tout sélectionner">
+                            <input type="checkbox" id="vpb-select-all" title="<?php esc_attr_e( 'Select all', 'visual-product-builder' ); ?>">
                         </th>
-                        <th style="width: 60px;">Aperçu</th>
-                        <th>Nom</th>
-                        <th>Catégorie</th>
-                        <th>Collection</th>
-                        <th>Couleur</th>
-                        <th>Prix</th>
-                        <th>Statut</th>
-                        <th style="width: 130px;">Actions</th>
+                        <th style="width: 60px;"><?php esc_html_e( 'Preview', 'visual-product-builder' ); ?></th>
+                        <th><?php esc_html_e( 'Name', 'visual-product-builder' ); ?></th>
+                        <th><?php esc_html_e( 'Category', 'visual-product-builder' ); ?></th>
+                        <th><?php esc_html_e( 'Collection', 'visual-product-builder' ); ?></th>
+                        <th><?php esc_html_e( 'Color', 'visual-product-builder' ); ?></th>
+                        <th><?php esc_html_e( 'Price', 'visual-product-builder' ); ?></th>
+                        <th><?php esc_html_e( 'Status', 'visual-product-builder' ); ?></th>
+                        <th style="width: 130px;"><?php esc_html_e( 'Actions', 'visual-product-builder' ); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -116,14 +116,14 @@ if ( $collection_filter ) {
                             <td class="vpb-price-cell"><?php echo wc_price( $element['price'] ); ?></td>
                             <td>
                                 <?php if ( $element['active'] ) : ?>
-                                    <span class="vpb-status vpb-status-active">Actif</span>
+                                    <span class="vpb-status vpb-status-active"><?php esc_html_e( 'Active', 'visual-product-builder' ); ?></span>
                                 <?php else : ?>
-                                    <span class="vpb-status vpb-status-inactive">Inactif</span>
+                                    <span class="vpb-status vpb-status-inactive"><?php esc_html_e( 'Inactive', 'visual-product-builder' ); ?></span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <button type="button" class="button button-small vpb-edit-element" data-id="<?php echo esc_attr( $element['id'] ); ?>">
-                                    Modifier
+                                    <?php esc_html_e( 'Edit', 'visual-product-builder' ); ?>
                                 </button>
                                 <button type="button" class="button button-small vpb-delete-element" data-id="<?php echo esc_attr( $element['id'] ); ?>">
                                     <span class="dashicons dashicons-trash" style="vertical-align: middle;"></span>
@@ -141,7 +141,7 @@ if ( $collection_filter ) {
 <div id="vpb-element-modal" class="vpb-modal" style="display: none;">
     <div class="vpb-modal-content">
         <div class="vpb-modal-header">
-            <h2 id="vpb-modal-title">Ajouter un élément</h2>
+            <h2 id="vpb-modal-title"><?php esc_html_e( 'Add Element', 'visual-product-builder' ); ?></h2>
             <button type="button" class="vpb-modal-close">&times;</button>
         </div>
         <div class="vpb-modal-body">
@@ -149,28 +149,28 @@ if ( $collection_filter ) {
                 <input type="hidden" name="id" id="vpb-element-id" value="0">
 
                 <div class="vpb-form-row">
-                    <label for="vpb-element-name">Nom *</label>
+                    <label for="vpb-element-name"><?php esc_html_e( 'Name *', 'visual-product-builder' ); ?></label>
                     <input type="text" id="vpb-element-name" name="name" required>
                 </div>
 
                 <div class="vpb-form-row">
-                    <label for="vpb-element-slug">Slug</label>
-                    <input type="text" id="vpb-element-slug" name="slug" placeholder="Généré automatiquement">
+                    <label for="vpb-element-slug"><?php esc_html_e( 'Slug', 'visual-product-builder' ); ?></label>
+                    <input type="text" id="vpb-element-slug" name="slug" placeholder="<?php esc_attr_e( 'Auto-generated', 'visual-product-builder' ); ?>">
                 </div>
 
                 <div class="vpb-form-row vpb-form-row-2col">
                     <div>
-                        <label for="vpb-element-category">Catégorie</label>
+                        <label for="vpb-element-category"><?php esc_html_e( 'Category', 'visual-product-builder' ); ?></label>
                         <select id="vpb-element-category" name="category">
-                            <option value="letter">Lettre</option>
-                            <option value="number">Chiffre</option>
-                            <option value="symbol">Symbole</option>
+                            <option value="letter"><?php esc_html_e( 'Letter', 'visual-product-builder' ); ?></option>
+                            <option value="number"><?php esc_html_e( 'Number', 'visual-product-builder' ); ?></option>
+                            <option value="symbol"><?php esc_html_e( 'Symbol', 'visual-product-builder' ); ?></option>
                         </select>
                     </div>
                     <div>
-                        <label for="vpb-element-collection">Collection</label>
+                        <label for="vpb-element-collection"><?php esc_html_e( 'Collection', 'visual-product-builder' ); ?></label>
                         <select id="vpb-element-collection" name="collection_id">
-                            <option value="">-- Aucune --</option>
+                            <option value=""><?php esc_html_e( '-- None --', 'visual-product-builder' ); ?></option>
                             <?php foreach ( $collections as $col ) : ?>
                                 <option value="<?php echo esc_attr( $col->id ); ?>">
                                     <?php echo esc_html( $col->name ); ?>
@@ -182,11 +182,11 @@ if ( $collection_filter ) {
 
                 <div class="vpb-form-row vpb-form-row-2col">
                     <div>
-                        <label for="vpb-element-color">Nom couleur</label>
-                        <input type="text" id="vpb-element-color" name="color" placeholder="bleu, rose...">
+                        <label for="vpb-element-color"><?php esc_html_e( 'Color name', 'visual-product-builder' ); ?></label>
+                        <input type="text" id="vpb-element-color" name="color" placeholder="<?php esc_attr_e( 'blue, pink...', 'visual-product-builder' ); ?>">
                     </div>
                     <div>
-                        <label for="vpb-element-color-hex">Couleur (hex)</label>
+                        <label for="vpb-element-color-hex"><?php esc_html_e( 'Color (hex)', 'visual-product-builder' ); ?></label>
                         <div class="vpb-color-picker-wrapper">
                             <input type="color" id="vpb-element-color-picker" value="#4F9ED9">
                             <input type="text" id="vpb-element-color-hex" name="color_hex" value="#4F9ED9" maxlength="7">
@@ -195,22 +195,22 @@ if ( $collection_filter ) {
                 </div>
 
                 <div class="vpb-form-row">
-                    <label for="vpb-element-svg">Image *</label>
+                    <label for="vpb-element-svg"><?php esc_html_e( 'Image *', 'visual-product-builder' ); ?></label>
                     <div class="vpb-image-field">
                         <input type="text" id="vpb-element-svg" name="svg_file" required>
-                        <button type="button" class="button vpb-select-image">Choisir</button>
+                        <button type="button" class="button vpb-select-image"><?php esc_html_e( 'Choose', 'visual-product-builder' ); ?></button>
                     </div>
-                    <p class="description">PNG, JPG ou SVG. Pour les SVG, utilisez fill="currentColor" pour la colorisation.</p>
+                    <p class="description"><?php esc_html_e( 'PNG, JPG or SVG. For SVG, use fill="currentColor" for colorization.', 'visual-product-builder' ); ?></p>
                     <div id="vpb-svg-preview" class="vpb-image-preview"></div>
                 </div>
 
                 <div class="vpb-form-row vpb-form-row-2col">
                     <div>
-                        <label for="vpb-element-price">Prix (€)</label>
+                        <label for="vpb-element-price"><?php esc_html_e( 'Price', 'visual-product-builder' ); ?></label>
                         <input type="number" id="vpb-element-price" name="price" step="0.01" min="0" value="0">
                     </div>
                     <div>
-                        <label for="vpb-element-order">Ordre</label>
+                        <label for="vpb-element-order"><?php esc_html_e( 'Sort order', 'visual-product-builder' ); ?></label>
                         <input type="number" id="vpb-element-order" name="sort_order" min="0" value="0">
                     </div>
                 </div>
@@ -218,14 +218,14 @@ if ( $collection_filter ) {
                 <div class="vpb-form-row">
                     <label>
                         <input type="checkbox" id="vpb-element-active" name="active" checked>
-                        Élément actif
+                        <?php esc_html_e( 'Active element', 'visual-product-builder' ); ?>
                     </label>
                 </div>
             </form>
         </div>
         <div class="vpb-modal-footer">
-            <button type="button" class="button vpb-modal-close">Annuler</button>
-            <button type="button" class="button button-primary" id="vpb-save-element">Enregistrer</button>
+            <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
+            <button type="button" class="button button-primary" id="vpb-save-element"><?php esc_html_e( 'Save', 'visual-product-builder' ); ?></button>
         </div>
     </div>
 </div>
@@ -234,29 +234,29 @@ if ( $collection_filter ) {
 <div id="vpb-bulk-price-modal" class="vpb-modal" style="display: none;">
     <div class="vpb-modal-content" style="width: 400px;">
         <div class="vpb-modal-header">
-            <h2>Modifier le prix</h2>
+            <h2><?php esc_html_e( 'Edit price', 'visual-product-builder' ); ?></h2>
             <button type="button" class="vpb-modal-close">&times;</button>
         </div>
         <div class="vpb-modal-body">
             <form id="vpb-bulk-price-form">
                 <p class="vpb-bulk-info"></p>
                 <div class="vpb-form-row">
-                    <label><input type="radio" name="price_mode" value="set" checked> Définir à</label>
+                    <label><input type="radio" name="price_mode" value="set" checked> <?php esc_html_e( 'Set to', 'visual-product-builder' ); ?></label>
                     <div class="vpb-price-input-row">
-                        <input type="number" id="vpb-bulk-price-value" step="0.01" min="0" value="0"> €
+                        <input type="number" id="vpb-bulk-price-value" step="0.01" min="0" value="0"> <?php echo esc_html( get_woocommerce_currency_symbol() ); ?>
                     </div>
                 </div>
                 <div class="vpb-form-row">
-                    <label><input type="radio" name="price_mode" value="add"> Ajouter</label>
+                    <label><input type="radio" name="price_mode" value="add"> <?php esc_html_e( 'Add', 'visual-product-builder' ); ?></label>
                 </div>
                 <div class="vpb-form-row">
-                    <label><input type="radio" name="price_mode" value="subtract"> Soustraire</label>
+                    <label><input type="radio" name="price_mode" value="subtract"> <?php esc_html_e( 'Subtract', 'visual-product-builder' ); ?></label>
                 </div>
             </form>
         </div>
         <div class="vpb-modal-footer">
-            <button type="button" class="button vpb-modal-close">Annuler</button>
-            <button type="button" class="button button-primary" id="vpb-apply-bulk-price">Appliquer</button>
+            <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
+            <button type="button" class="button button-primary" id="vpb-apply-bulk-price"><?php esc_html_e( 'Apply', 'visual-product-builder' ); ?></button>
         </div>
     </div>
 </div>
@@ -265,15 +265,15 @@ if ( $collection_filter ) {
 <div id="vpb-bulk-collection-modal" class="vpb-modal" style="display: none;">
     <div class="vpb-modal-content" style="width: 400px;">
         <div class="vpb-modal-header">
-            <h2>Assigner à une collection</h2>
+            <h2><?php esc_html_e( 'Assign to collection', 'visual-product-builder' ); ?></h2>
             <button type="button" class="vpb-modal-close">&times;</button>
         </div>
         <div class="vpb-modal-body">
             <p class="vpb-bulk-info"></p>
             <div class="vpb-form-row">
-                <label for="vpb-bulk-collection-select">Collection</label>
+                <label for="vpb-bulk-collection-select"><?php esc_html_e( 'Collection', 'visual-product-builder' ); ?></label>
                 <select id="vpb-bulk-collection-select">
-                    <option value="">-- Retirer de toute collection --</option>
+                    <option value=""><?php esc_html_e( '-- Remove from all collections --', 'visual-product-builder' ); ?></option>
                     <?php foreach ( $collections as $col ) : ?>
                         <option value="<?php echo esc_attr( $col->id ); ?>">
                             <?php echo esc_html( $col->name ); ?>
@@ -283,8 +283,8 @@ if ( $collection_filter ) {
             </div>
         </div>
         <div class="vpb-modal-footer">
-            <button type="button" class="button vpb-modal-close">Annuler</button>
-            <button type="button" class="button button-primary" id="vpb-apply-bulk-collection">Appliquer</button>
+            <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
+            <button type="button" class="button button-primary" id="vpb-apply-bulk-collection"><?php esc_html_e( 'Apply', 'visual-product-builder' ); ?></button>
         </div>
     </div>
 </div>
@@ -520,7 +520,7 @@ jQuery(document).ready(function($) {
     $('#vpb-add-element').on('click', function() {
         $('#vpb-element-form')[0].reset();
         $('#vpb-element-id').val(0);
-        $('#vpb-modal-title').text('Ajouter un élément');
+        $('#vpb-modal-title').text(vpbAdmin.i18n.addElement || 'Add Element');
         $('#vpb-svg-preview').empty();
         $('#vpb-element-color-picker').val('#4F9ED9');
         $('#vpb-element-color-hex').val('#4F9ED9');
@@ -557,7 +557,7 @@ jQuery(document).ready(function($) {
                         $('#vpb-svg-preview').html('<img src="' + el.svg_file + '">');
                     }
 
-                    $('#vpb-modal-title').text('Modifier l\'élément');
+                    $('#vpb-modal-title').text(vpbAdmin.i18n.editElement || 'Edit Element');
                     openModal('#vpb-element-modal');
                 }
             }
@@ -567,7 +567,7 @@ jQuery(document).ready(function($) {
     // Save element
     $('#vpb-save-element').on('click', function() {
         var btn = $(this);
-        btn.prop('disabled', true).text('Enregistrement...');
+        btn.prop('disabled', true).text(vpbAdmin.i18n.saving || 'Saving...');
 
         $.ajax({
             url: vpbAdmin.ajaxUrl,
@@ -591,13 +591,13 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert(response.data.message || 'Erreur');
-                    btn.prop('disabled', false).text('Enregistrer');
+                    alert(response.data.message || vpbAdmin.i18n.error || 'Error');
+                    btn.prop('disabled', false).text(vpbAdmin.i18n.save || 'Save');
                 }
             },
             error: function() {
-                alert('Erreur de connexion');
-                btn.prop('disabled', false).text('Enregistrer');
+                alert(vpbAdmin.i18n.connectionError || 'Connection error');
+                btn.prop('disabled', false).text(vpbAdmin.i18n.save || 'Save');
             }
         });
     });
@@ -617,7 +617,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     row.fadeOut(300, function() { $(this).remove(); });
                 } else {
-                    alert(response.data.message || 'Erreur');
+                    alert(response.data.message || vpbAdmin.i18n.error || 'Error');
                 }
             }
         });
@@ -649,7 +649,8 @@ jQuery(document).ready(function($) {
 
     function updateBulkBar() {
         var count = selectedIds.length;
-        $('.vpb-selected-count').text(count + ' sélectionné(s)');
+        var selectedText = vpbAdmin.i18n.selected || 'selected';
+        $('.vpb-selected-count').text(count + ' ' + selectedText);
         if (count > 0) {
             $('.vpb-bulk-actions').show();
         } else {
@@ -682,7 +683,8 @@ jQuery(document).ready(function($) {
 
     // Bulk price
     $('#vpb-bulk-price').on('click', function() {
-        $('.vpb-bulk-info').text(selectedIds.length + ' éléments sélectionnés');
+        var elementsSelectedText = vpbAdmin.i18n.elementsSelected || 'elements selected';
+        $('.vpb-bulk-info').text(selectedIds.length + ' ' + elementsSelectedText);
         openModal('#vpb-bulk-price-modal');
     });
 
@@ -704,7 +706,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert(response.data.message || 'Erreur');
+                    alert(response.data.message || vpbAdmin.i18n.error || 'Error');
                     btn.prop('disabled', false);
                 }
             }
@@ -713,7 +715,8 @@ jQuery(document).ready(function($) {
 
     // Bulk collection
     $('#vpb-bulk-collection').on('click', function() {
-        $('#vpb-bulk-collection-modal .vpb-bulk-info').text(selectedIds.length + ' éléments sélectionnés');
+        var elementsSelectedText = vpbAdmin.i18n.elementsSelected || 'elements selected';
+        $('#vpb-bulk-collection-modal .vpb-bulk-info').text(selectedIds.length + ' ' + elementsSelectedText);
         openModal('#vpb-bulk-collection-modal');
     });
 
@@ -734,7 +737,7 @@ jQuery(document).ready(function($) {
                 if (response.success) {
                     location.reload();
                 } else {
-                    alert(response.data.message || 'Erreur');
+                    alert(response.data.message || vpbAdmin.i18n.error || 'Error');
                     btn.prop('disabled', false);
                 }
             }
@@ -743,10 +746,10 @@ jQuery(document).ready(function($) {
 
     // Import sample data
     $('#vpb-import-sample').on('click', function() {
-        if (!confirm('Importer les données d\'exemple ? Cela ajoutera des éléments à votre bibliothèque.')) return;
+        if (!confirm(vpbAdmin.i18n.confirmImportSample || 'Import sample data? This will add elements to your library.')) return;
 
         var btn = $(this);
-        btn.prop('disabled', true).text('Import...');
+        btn.prop('disabled', true).text(vpbAdmin.i18n.importing || 'Importing...');
 
         $.ajax({
             url: vpbAdmin.ajaxUrl,
@@ -757,8 +760,8 @@ jQuery(document).ready(function($) {
                     alert(response.data.message);
                     location.reload();
                 } else {
-                    alert(response.data.message || 'Erreur');
-                    btn.prop('disabled', false).text('Importer données exemple');
+                    alert(response.data.message || vpbAdmin.i18n.error || 'Error');
+                    btn.prop('disabled', false).text(vpbAdmin.i18n.importSampleData || 'Import Sample Data');
                 }
             }
         });
