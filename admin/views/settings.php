@@ -91,6 +91,21 @@ defined( 'ABSPATH' ) || exit;
                 </tbody>
             </table>
         </div>
+
+        <div class="vpb-card vpb-card-full">
+            <h2>CSS personnalisé</h2>
+            <p>Ajoutez du CSS personnalisé pour modifier l'apparence du configurateur.</p>
+            <form method="post" action="">
+                <?php wp_nonce_field( 'vpb_save_custom_css', 'vpb_css_nonce' ); ?>
+                <textarea name="vpb_custom_css" id="vpb-custom-css" rows="15" class="large-text code"><?php echo esc_textarea( get_option( 'vpb_custom_css', '' ) ); ?></textarea>
+                <p class="description">
+                    Exemple : <code>.vpb-configurator { background: #f5f5f5; }</code>
+                </p>
+                <p style="margin-top: 15px;">
+                    <button type="submit" name="vpb_save_css" class="button button-primary">Enregistrer le CSS</button>
+                </p>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -106,6 +121,9 @@ defined( 'ABSPATH' ) || exit;
     border: 1px solid #ccd0d4;
     padding: 20px;
     border-radius: 4px;
+}
+.vpb-card.vpb-card-full {
+    grid-column: 1 / -1;
 }
 .vpb-card h2 {
     margin-top: 0;
@@ -125,5 +143,9 @@ defined( 'ABSPATH' ) || exit;
 #vpb-import-status {
     margin-left: 10px;
     font-style: italic;
+}
+#vpb-custom-css {
+    font-family: monospace;
+    font-size: 13px;
 }
 </style>

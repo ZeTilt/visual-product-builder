@@ -229,6 +229,12 @@ function vpb_enqueue_assets() {
         VPB_VERSION
     );
 
+    // Add custom CSS from settings
+    $custom_css = get_option( 'vpb_custom_css', '' );
+    if ( ! empty( $custom_css ) ) {
+        wp_add_inline_style( 'vpb-configurator', $custom_css );
+    }
+
     wp_enqueue_script(
         'vpb-configurator',
         VPB_PLUGIN_URL . 'assets/js/configurator.js',

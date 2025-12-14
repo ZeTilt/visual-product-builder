@@ -129,6 +129,17 @@ class VPB_Admin {
             wp_die( 'Vous n\'avez pas la permission d\'accéder à cette page.' );
         }
 
+        // Handle custom CSS save
+        if ( isset( $_POST['vpb_save_css'] ) && isset( $_POST['vpb_css_nonce'] ) ) {
+            if ( wp_verify_nonce( $_POST['vpb_css_nonce'], 'vpb_save_custom_css' ) ) {
+                $custom_css = isset( $_POST['vpb_custom_css'] ) ? wp_strip_all_tags( $_POST['vpb_custom_css'] ) : '';
+                update_option( 'vpb_custom_css', $custom_css );
+                add_settings_error( 'vpb_messages', 'vpb_css_saved', 'CSS personnalisé enregistré.', 'success' );
+            }
+        }
+
+        settings_errors( 'vpb_messages' );
+
         include VPB_PLUGIN_DIR . 'admin/views/settings.php';
     }
 
