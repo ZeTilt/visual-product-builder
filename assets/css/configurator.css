@@ -335,23 +335,20 @@
     object-fit: contain;
 }
 
-/* SVG colorization - inherit color from button */
-.vpb-element-btn img[src$=".svg"] {
-    filter: none;
+/* Color background on element buttons - uses CSS variable */
+.vpb-element-btn {
+    background-color: var(--element-color, #fff);
+    border-color: var(--element-color, #e5e7eb);
 }
 
-/* Color indicator on element buttons */
-.vpb-element-btn::after {
-    content: '';
-    position: absolute;
-    bottom: 3px;
-    right: 3px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: currentColor;
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+.vpb-element-btn:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}
+
+/* SVG appears white on colored background */
+.vpb-element-btn img {
+    filter: brightness(0) invert(1);
 }
 
 .vpb-element-btn.hidden {

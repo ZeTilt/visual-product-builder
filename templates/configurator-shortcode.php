@@ -100,7 +100,7 @@ defined( 'ABSPATH' ) || exit;
                                 data-collection="<?php echo esc_attr( $element['collection_id'] ?? '' ); ?>"
                                 data-price="<?php echo esc_attr( $element['price'] ); ?>"
                                 data-svg="<?php echo esc_url( $element['svg_file'] ); ?>"
-                                style="color: <?php echo esc_attr( $color_hex ); ?>;"
+                                style="--element-color: <?php echo esc_attr( $color_hex ); ?>;"
                                 title="<?php echo esc_attr( $element['name'] . ' (' . ucfirst( $element['color'] ) . ')' ); ?>">
                             <img src="<?php echo esc_url( $element['svg_file'] ); ?>"
                                  alt="<?php echo esc_attr( $element['name'] ); ?>">

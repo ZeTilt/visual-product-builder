@@ -10,6 +10,9 @@ defined( 'ABSPATH' ) || exit;
 <div class="wrap vpb-admin">
     <h1 class="wp-heading-inline">Collections</h1>
     <button type="button" class="page-title-action" id="vpb-add-collection">Ajouter une collection</button>
+    <?php if ( ! empty( $collections ) ) : ?>
+        <button type="button" class="page-title-action vpb-danger-action" id="vpb-purge-collections">Tout supprimer</button>
+    <?php endif; ?>
     <hr class="wp-header-end">
 
     <?php if ( empty( $collections ) ) : ?>
@@ -254,6 +257,16 @@ defined( 'ABSPATH' ) || exit;
     width: 100px;
     font-family: monospace;
 }
+
+.vpb-danger-action {
+    color: #b32d2e !important;
+    border-color: #b32d2e !important;
+}
+
+.vpb-danger-action:hover {
+    background: #b32d2e !important;
+    color: #fff !important;
+}
 </style>
 
 <script>
@@ -406,6 +419,38 @@ jQuery(document).ready(function($) {
                 } else {
                     alert(response.data.message || 'Erreur');
                 }
+            }
+        });
+    });
+
+    // Purge all collections
+    $('#vpb-purge-collections').on('click', function() {
+        var count = $('.vpb-collection-card').length;
+        if (!confirm('Voulez-vous vraiment supprimer les ' + count + ' collections ?\n\nLes éléments ne seront pas supprimés mais ne seront plus assignés à aucune collection.')) {
+            return;
+        }
+
+        var btn = $(this);
+        btn.prop('disabled', true).text('Suppression...');
+
+        $.ajax({
+            url: vpbAdmin.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'vpb_purge_collections',
+                nonce: vpbAdmin.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert(response.data.message || 'Erreur');
+                    btn.prop('disabled', false).text('Tout supprimer');
+                }
+            },
+            error: function() {
+                alert('Erreur de connexion');
+                btn.prop('disabled', false).text('Tout supprimer');
             }
         });
     });

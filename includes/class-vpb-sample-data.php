@@ -98,7 +98,7 @@ class VPB_Sample_Data {
                     'color_hex'     => $color_hex,
                     'svg_file'      => VPB_PLUGIN_URL . 'assets/svg/letters/letter-' . $letter . '.svg',
                     'collection_id' => isset( $collection_ids[ $collection_key ] ) ? $collection_ids[ $collection_key ] : null,
-                    'price'         => 2.00,
+                    'price'         => 0.00,
                     'sort_order'    => $index,
                     'active'        => 1,
                 );
@@ -117,7 +117,7 @@ class VPB_Sample_Data {
                     'color_hex'     => $color_hex,
                     'svg_file'      => VPB_PLUGIN_URL . 'assets/svg/numbers/number-' . $i . '.svg',
                     'collection_id' => isset( $collection_ids[ $collection_key ] ) ? $collection_ids[ $collection_key ] : null,
-                    'price'         => 2.00,
+                    'price'         => 0.00,
                     'sort_order'    => $i,
                     'active'        => 1,
                 );
@@ -150,7 +150,7 @@ class VPB_Sample_Data {
                     'color_hex'     => $color_hex,
                     'svg_file'      => VPB_PLUGIN_URL . 'assets/svg/symbols/' . $symbol['file'],
                     'collection_id' => isset( $collection_ids[ $collection_key ] ) ? $collection_ids[ $collection_key ] : null,
-                    'price'         => 3.00,
+                    'price'         => 0.00,
                     'sort_order'    => $index,
                     'active'        => 1,
                 );

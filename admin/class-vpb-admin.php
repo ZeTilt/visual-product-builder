@@ -31,6 +31,7 @@ class VPB_Admin {
         add_action( 'wp_ajax_vpb_save_collection', array( $this, 'ajax_save_collection' ) );
         add_action( 'wp_ajax_vpb_delete_collection', array( $this, 'ajax_delete_collection' ) );
         add_action( 'wp_ajax_vpb_get_collection', array( $this, 'ajax_get_collection' ) );
+        add_action( 'wp_ajax_vpb_purge_collections', array( $this, 'ajax_purge_collections' ) );
 
         // WooCommerce product metabox
         add_action( 'add_meta_boxes', array( $this, 'add_product_metabox' ) );
@@ -396,6 +397,33 @@ class VPB_Admin {
         } else {
             wp_send_json_error( array( 'message' => 'Échec de la suppression' ) );
         }
+    }
+
+    /**
+     * AJAX: Purge all collections
+     */
+    public function ajax_purge_collections() {
+        check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+        }
+
+        global $wpdb;
+
+        // Clear collections table
+        $collections_table = $wpdb->prefix . 'vpb_collections';
+        $wpdb->query( "TRUNCATE TABLE $collections_table" );
+
+        // Clear product-collection relationships
+        $product_collections_table = $wpdb->prefix . 'vpb_product_collections';
+        $wpdb->query( "TRUNCATE TABLE $product_collections_table" );
+
+        // Reset collection_id on all elements
+        $elements_table = $wpdb->prefix . 'vpb_elements';
+        $wpdb->query( "UPDATE $elements_table SET collection_id = NULL" );
+
+        wp_send_json_success( array( 'message' => 'Toutes les collections ont été supprimées' ) );
     }
 
     /**
