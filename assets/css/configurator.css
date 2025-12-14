@@ -88,11 +88,27 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: grab;
+    transition: transform 0.15s, opacity 0.15s;
+}
+
+.vpb-preview-element:active {
+    cursor: grabbing;
+}
+
+.vpb-preview-element.vpb-dragging {
+    opacity: 0.4;
+    transform: scale(0.9);
+}
+
+.vpb-preview-element.vpb-drag-over {
+    transform: scale(1.15);
 }
 
 .vpb-preview-element img {
     max-width: 100%;
     max-height: 100%;
+    pointer-events: none;
 }
 
 .vpb-preview-element[data-is-svg="true"] img {

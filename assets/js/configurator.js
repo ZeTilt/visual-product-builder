@@ -11,7 +11,8 @@
         history: [],
         basePrice: 0,
         limit: 10,
-        productId: 0
+        productId: 0,
+        dragIndex: null
     };
 
     // DOM Elements
@@ -361,13 +362,24 @@
             div.className = 'vpb-preview-element';
             div.style.opacity = '0';
             div.setAttribute('data-is-svg', element.isSvg ? 'true' : 'false');
+            div.setAttribute('data-index', index);
+            div.draggable = true;
 
             // Only apply colored background for SVG elements
             if (element.isSvg) {
                 div.style.backgroundColor = element.colorHex || '#4F9ED9';
             }
 
-            div.innerHTML = `<img src="${element.svg}" alt="${element.name}">`;
+            div.innerHTML = `<img src="${element.svg}" alt="${element.name}" draggable="false">`;
+
+            // Drag events
+            div.addEventListener('dragstart', handleDragStart);
+            div.addEventListener('dragend', handleDragEnd);
+            div.addEventListener('dragover', handleDragOver);
+            div.addEventListener('drop', handleDrop);
+            div.addEventListener('dragenter', handleDragEnter);
+            div.addEventListener('dragleave', handleDragLeave);
+
             preview.appendChild(div);
 
             // Staggered pop-in animation
@@ -375,6 +387,83 @@
                 div.style.opacity = '1';
             }, index * 50);
         });
+    }
+
+    /**
+     * Handle drag start
+     */
+    function handleDragStart(e) {
+        const index = parseInt(e.currentTarget.dataset.index);
+        state.dragIndex = index;
+        e.currentTarget.classList.add('vpb-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', index);
+    }
+
+    /**
+     * Handle drag end
+     */
+    function handleDragEnd(e) {
+        e.currentTarget.classList.remove('vpb-dragging');
+        state.dragIndex = null;
+
+        // Remove all drag-over classes
+        preview.querySelectorAll('.vpb-drag-over').forEach(el => {
+            el.classList.remove('vpb-drag-over');
+        });
+    }
+
+    /**
+     * Handle drag over
+     */
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    }
+
+    /**
+     * Handle drag enter
+     */
+    function handleDragEnter(e) {
+        e.preventDefault();
+        const target = e.currentTarget;
+        const targetIndex = parseInt(target.dataset.index);
+
+        if (state.dragIndex !== null && targetIndex !== state.dragIndex) {
+            target.classList.add('vpb-drag-over');
+        }
+    }
+
+    /**
+     * Handle drag leave
+     */
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove('vpb-drag-over');
+    }
+
+    /**
+     * Handle drop
+     */
+    function handleDrop(e) {
+        e.preventDefault();
+        const target = e.currentTarget;
+        target.classList.remove('vpb-drag-over');
+
+        const fromIndex = state.dragIndex;
+        const toIndex = parseInt(target.dataset.index);
+
+        if (fromIndex === null || fromIndex === toIndex) return;
+
+        // Save history for undo
+        state.history.push([...state.elements]);
+
+        // Reorder elements
+        const [movedElement] = state.elements.splice(fromIndex, 1);
+        state.elements.splice(toIndex, 0, movedElement);
+
+        // Re-render
+        render();
+        saveToStorage();
     }
 
     /**
