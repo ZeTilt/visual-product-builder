@@ -293,7 +293,7 @@ class VPB_Collection {
 
         $defaults = array(
             'active'  => 1,
-            'orderby' => 'sort_order',
+            'orderby' => 'name',
             'order'   => 'ASC',
         );
 
