@@ -32,6 +32,7 @@ class VPB_Admin {
         add_action( 'wp_ajax_vpb_delete_collection', array( $this, 'ajax_delete_collection' ) );
         add_action( 'wp_ajax_vpb_get_collection', array( $this, 'ajax_get_collection' ) );
         add_action( 'wp_ajax_vpb_purge_collections', array( $this, 'ajax_purge_collections' ) );
+        add_action( 'wp_ajax_vpb_import_element', array( $this, 'ajax_import_element' ) );
 
         // WooCommerce product metabox
         add_action( 'add_meta_boxes', array( $this, 'add_product_metabox' ) );
@@ -424,6 +425,107 @@ class VPB_Admin {
         $wpdb->query( "TRUNCATE TABLE $product_collections_table" );
 
         wp_send_json_success( array( 'message' => 'Toutes les collections et éléments ont été supprimés' ) );
+    }
+
+    /**
+     * AJAX: Import single element from uploaded file
+     */
+    public function ajax_import_element() {
+        check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+            wp_send_json_error( array( 'message' => 'Permission refusée' ) );
+        }
+
+        if ( empty( $_FILES['file'] ) ) {
+            wp_send_json_error( array( 'message' => 'Aucun fichier reçu' ) );
+        }
+
+        $file = $_FILES['file'];
+
+        // Validate file type
+        $allowed_types = array( 'image/svg+xml' );
+        $finfo         = finfo_open( FILEINFO_MIME_TYPE );
+        $mime_type     = finfo_file( $finfo, $file['tmp_name'] );
+        finfo_close( $finfo );
+
+        // SVG might be detected as text/plain or application/xml
+        if ( ! in_array( $mime_type, array( 'image/svg+xml', 'text/plain', 'text/xml', 'application/xml' ), true ) ) {
+            wp_send_json_error( array( 'message' => 'Type de fichier non autorisé: ' . $mime_type ) );
+        }
+
+        // Check extension
+        $ext = strtolower( pathinfo( $file['name'], PATHINFO_EXTENSION ) );
+        if ( $ext !== 'svg' ) {
+            wp_send_json_error( array( 'message' => 'Extension non autorisée' ) );
+        }
+
+        // Get element name from filename (without extension)
+        $element_name = pathinfo( $file['name'], PATHINFO_FILENAME );
+        $element_slug = sanitize_title( $element_name );
+
+        // Get other parameters
+        $collection_id = isset( $_POST['collection_id'] ) ? absint( $_POST['collection_id'] ) : null;
+        $color_hex     = isset( $_POST['color_hex'] ) ? sanitize_hex_color( $_POST['color_hex'] ) : '#4F9ED9';
+        $category      = isset( $_POST['category'] ) ? sanitize_key( $_POST['category'] ) : 'letter';
+        $price         = isset( $_POST['price'] ) ? floatval( $_POST['price'] ) : 0.00;
+
+        // Get color name from collection or generate one
+        $color_name = 'default';
+        if ( $collection_id ) {
+            $collection = VPB_Collection::get_collection( $collection_id );
+            if ( $collection ) {
+                $color_name = sanitize_title( $collection->name );
+            }
+        }
+
+        // Upload file to WordPress uploads directory
+        if ( ! function_exists( 'wp_handle_upload' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+
+        // Allow SVG uploads temporarily
+        add_filter( 'upload_mimes', function( $mimes ) {
+            $mimes['svg'] = 'image/svg+xml';
+            return $mimes;
+        } );
+
+        $upload_overrides = array(
+            'test_form' => false,
+            'mimes'     => array( 'svg' => 'image/svg+xml' ),
+        );
+
+        $movefile = wp_handle_upload( $file, $upload_overrides );
+
+        if ( $movefile && ! isset( $movefile['error'] ) ) {
+            // Create element in database
+            $element_data = array(
+                'name'          => $element_name,
+                'slug'          => $element_slug . '-' . $color_name,
+                'category'      => $category,
+                'svg_file'      => $movefile['url'],
+                'color'         => $color_name,
+                'color_hex'     => $color_hex,
+                'collection_id' => $collection_id,
+                'price'         => $price,
+                'sort_order'    => 0,
+                'active'        => 1,
+            );
+
+            $element_id = VPB_Library::add_element( $element_data );
+
+            if ( $element_id ) {
+                wp_send_json_success( array(
+                    'message'    => 'Élément importé',
+                    'element_id' => $element_id,
+                    'name'       => $element_name,
+                ) );
+            } else {
+                wp_send_json_error( array( 'message' => 'Erreur lors de la création de l\'élément' ) );
+            }
+        } else {
+            wp_send_json_error( array( 'message' => $movefile['error'] ?? 'Erreur d\'upload' ) );
+        }
     }
 
     /**

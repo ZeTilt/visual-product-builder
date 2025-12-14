@@ -46,11 +46,17 @@ defined( 'ABSPATH' ) || exit;
                         <?php endif; ?>
                     </div>
                     <div class="vpb-collection-card-footer">
+                        <button type="button" class="button button-primary vpb-import-elements"
+                                data-id="<?php echo esc_attr( $collection->id ); ?>"
+                                data-name="<?php echo esc_attr( $collection->name ); ?>"
+                                data-color="<?php echo esc_attr( $collection->color_hex ); ?>">
+                            <span class="dashicons dashicons-upload"></span> Importer
+                        </button>
                         <button type="button" class="button vpb-edit-collection" data-id="<?php echo esc_attr( $collection->id ); ?>">
-                            <span class="dashicons dashicons-edit"></span> Modifier
+                            <span class="dashicons dashicons-edit"></span>
                         </button>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=vpb-elements&collection=' . $collection->id ) ); ?>" class="button">
-                            <span class="dashicons dashicons-visibility"></span> Voir
+                            <span class="dashicons dashicons-visibility"></span>
                         </a>
                         <button type="button" class="button vpb-delete-collection" data-id="<?php echo esc_attr( $collection->id ); ?>">
                             <span class="dashicons dashicons-trash"></span>
@@ -123,6 +129,53 @@ defined( 'ABSPATH' ) || exit;
         <div class="vpb-modal-footer">
             <button type="button" class="button vpb-modal-close">Annuler</button>
             <button type="button" class="button button-primary" id="vpb-save-collection">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- Import Elements Modal -->
+<div id="vpb-import-modal" class="vpb-modal" style="display: none;">
+    <div class="vpb-modal-content" style="max-width: 600px;">
+        <div class="vpb-modal-header">
+            <h2>Importer des éléments dans <span id="vpb-import-collection-name"></span></h2>
+            <button type="button" class="vpb-modal-close">&times;</button>
+        </div>
+        <div class="vpb-modal-body">
+            <input type="hidden" id="vpb-import-collection-id" value="">
+            <input type="hidden" id="vpb-import-collection-color" value="">
+
+            <div class="vpb-import-dropzone" id="vpb-dropzone">
+                <span class="dashicons dashicons-upload" style="font-size: 48px; width: 48px; height: 48px; color: #c3c4c7;"></span>
+                <p>Glissez-déposez vos fichiers SVG ici</p>
+                <p><small>ou</small></p>
+                <button type="button" class="button" id="vpb-select-files">Sélectionner des fichiers</button>
+                <input type="file" id="vpb-file-input" multiple accept=".svg" style="display: none;">
+            </div>
+
+            <div id="vpb-import-preview" class="vpb-import-preview" style="display: none;">
+                <h4>Fichiers sélectionnés : <span id="vpb-file-count">0</span></h4>
+                <div id="vpb-file-list" class="vpb-file-list"></div>
+            </div>
+
+            <div class="vpb-form-row" style="margin-top: 15px;">
+                <label for="vpb-import-category">Catégorie</label>
+                <select id="vpb-import-category">
+                    <option value="letter">Lettre</option>
+                    <option value="number">Chiffre</option>
+                    <option value="symbol">Symbole</option>
+                </select>
+            </div>
+
+            <div class="vpb-form-row">
+                <label for="vpb-import-price">Prix par élément (€)</label>
+                <input type="number" id="vpb-import-price" value="0" min="0" step="0.01">
+            </div>
+        </div>
+        <div class="vpb-modal-footer">
+            <button type="button" class="button vpb-modal-close">Annuler</button>
+            <button type="button" class="button button-primary" id="vpb-start-import" disabled>
+                Importer <span id="vpb-import-btn-count"></span>
+            </button>
         </div>
     </div>
 </div>
@@ -365,6 +418,91 @@ defined( 'ABSPATH' ) || exit;
     max-height: 100%;
     object-fit: contain;
 }
+
+/* Import dropzone */
+.vpb-import-dropzone {
+    border: 2px dashed #c3c4c7;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #f6f7f7;
+    transition: all 0.2s;
+}
+
+.vpb-import-dropzone.dragover {
+    border-color: #2271b1;
+    background: #f0f6fc;
+}
+
+.vpb-import-dropzone p {
+    margin: 10px 0;
+    color: #646970;
+}
+
+.vpb-file-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.vpb-file-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f1;
+    gap: 10px;
+}
+
+.vpb-file-item:last-child {
+    border-bottom: none;
+}
+
+.vpb-file-item .dashicons {
+    color: #f0b849;
+}
+
+.vpb-file-item .vpb-file-name {
+    flex: 1;
+    font-family: monospace;
+    font-size: 13px;
+}
+
+.vpb-file-item .vpb-remove-file {
+    color: #b32d2e;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.vpb-file-item .vpb-remove-file:hover {
+    color: #d63638;
+}
+
+.vpb-import-progress {
+    margin-top: 15px;
+}
+
+.vpb-progress-bar {
+    height: 20px;
+    background: #f0f0f1;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.vpb-progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2271b1, #135e96);
+    transition: width 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+}
 </style>
 
 <script>
@@ -578,6 +716,189 @@ jQuery(document).ready(function($) {
         $('#vpb-collection-thumbnail').val('');
         $('#vpb-collection-thumbnail-preview').empty();
         $(this).hide();
+    });
+
+    // ========================================
+    // IMPORT ELEMENTS FUNCTIONALITY
+    // ========================================
+
+    var importFiles = [];
+
+    // Open import modal
+    $('.vpb-import-elements').on('click', function() {
+        var btn = $(this);
+        $('#vpb-import-collection-id').val(btn.data('id'));
+        $('#vpb-import-collection-name').text(btn.data('name'));
+        $('#vpb-import-collection-color').val(btn.data('color'));
+        importFiles = [];
+        updateFileList();
+        $('#vpb-import-modal').fadeIn(200);
+    });
+
+    // Close import modal
+    $('#vpb-import-modal .vpb-modal-close').on('click', function() {
+        $('#vpb-import-modal').fadeOut(200);
+    });
+
+    $('#vpb-import-modal').on('click', function(e) {
+        if (e.target === this) $(this).fadeOut(200);
+    });
+
+    // File selection button
+    $('#vpb-select-files').on('click', function() {
+        $('#vpb-file-input').click();
+    });
+
+    // File input change
+    $('#vpb-file-input').on('change', function(e) {
+        addFiles(e.target.files);
+    });
+
+    // Drag and drop
+    var dropzone = $('#vpb-dropzone');
+
+    dropzone.on('dragover dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('dragover');
+    });
+
+    dropzone.on('dragleave dragend drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('dragover');
+    });
+
+    dropzone.on('drop', function(e) {
+        var files = e.originalEvent.dataTransfer.files;
+        addFiles(files);
+    });
+
+    // Add files to list
+    function addFiles(files) {
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+                // Check if not already added
+                var exists = importFiles.some(function(f) { return f.name === file.name; });
+                if (!exists) {
+                    importFiles.push(file);
+                }
+            }
+        }
+        updateFileList();
+    }
+
+    // Update file list display
+    function updateFileList() {
+        var list = $('#vpb-file-list');
+        list.empty();
+
+        if (importFiles.length === 0) {
+            $('#vpb-import-preview').hide();
+            $('#vpb-start-import').prop('disabled', true);
+            $('#vpb-import-btn-count').text('');
+            return;
+        }
+
+        $('#vpb-import-preview').show();
+        $('#vpb-file-count').text(importFiles.length);
+        $('#vpb-start-import').prop('disabled', false);
+        $('#vpb-import-btn-count').text('(' + importFiles.length + ')');
+
+        importFiles.forEach(function(file, index) {
+            var name = file.name.replace(/\.svg$/i, '');
+            var item = $('<div class="vpb-file-item">' +
+                '<span class="dashicons dashicons-media-code"></span>' +
+                '<span class="vpb-file-name">' + name + '</span>' +
+                '<button type="button" class="vpb-remove-file" data-index="' + index + '">' +
+                '<span class="dashicons dashicons-no-alt"></span>' +
+                '</button>' +
+                '</div>');
+            list.append(item);
+        });
+    }
+
+    // Remove file from list
+    $(document).on('click', '.vpb-remove-file', function() {
+        var index = $(this).data('index');
+        importFiles.splice(index, 1);
+        updateFileList();
+    });
+
+    // Start import
+    $('#vpb-start-import').on('click', function() {
+        if (importFiles.length === 0) return;
+
+        var btn = $(this);
+        btn.prop('disabled', true).text('Import en cours...');
+
+        var collectionId = $('#vpb-import-collection-id').val();
+        var collectionColor = $('#vpb-import-collection-color').val();
+        var category = $('#vpb-import-category').val();
+        var price = $('#vpb-import-price').val();
+
+        var completed = 0;
+        var total = importFiles.length;
+        var errors = [];
+
+        // Show progress
+        $('#vpb-import-preview').html(
+            '<div class="vpb-import-progress">' +
+            '<p>Import en cours... <span id="vpb-progress-text">0/' + total + '</span></p>' +
+            '<div class="vpb-progress-bar"><div class="vpb-progress-bar-fill" style="width: 0%"></div></div>' +
+            '</div>'
+        );
+
+        // Upload files one by one
+        function uploadNext(index) {
+            if (index >= importFiles.length) {
+                // Done
+                var message = completed + ' élément(s) importé(s)';
+                if (errors.length > 0) {
+                    message += '\n' + errors.length + ' erreur(s):\n' + errors.join('\n');
+                }
+                alert(message);
+                location.reload();
+                return;
+            }
+
+            var file = importFiles[index];
+            var formData = new FormData();
+            formData.append('action', 'vpb_import_element');
+            formData.append('nonce', vpbAdmin.nonce);
+            formData.append('file', file);
+            formData.append('collection_id', collectionId);
+            formData.append('color_hex', collectionColor);
+            formData.append('category', category);
+            formData.append('price', price);
+
+            $.ajax({
+                url: vpbAdmin.ajaxUrl,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        completed++;
+                    } else {
+                        errors.push(file.name + ': ' + (response.data.message || 'Erreur'));
+                    }
+                },
+                error: function() {
+                    errors.push(file.name + ': Erreur réseau');
+                },
+                complete: function() {
+                    var progress = Math.round(((index + 1) / total) * 100);
+                    $('#vpb-progress-text').text((index + 1) + '/' + total);
+                    $('.vpb-progress-bar-fill').css('width', progress + '%').text(progress + '%');
+                    uploadNext(index + 1);
+                }
+            });
+        }
+
+        uploadNext(0);
     });
 });
 </script>
