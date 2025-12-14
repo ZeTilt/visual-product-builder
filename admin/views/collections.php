@@ -267,6 +267,104 @@ defined( 'ABSPATH' ) || exit;
     background: #b32d2e !important;
     color: #fff !important;
 }
+
+/* Modal */
+.vpb-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vpb-modal-content {
+    background: #fff;
+    border-radius: 4px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+}
+
+.vpb-modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #dcdcde;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vpb-modal-header h2 { margin: 0; font-size: 18px; }
+
+.vpb-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #646970;
+    line-height: 1;
+}
+
+.vpb-modal-close:hover { color: #d63638; }
+.vpb-modal-body { padding: 20px; }
+
+.vpb-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #dcdcde;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.vpb-form-row {
+    margin-bottom: 15px;
+}
+
+.vpb-form-row label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.vpb-form-row input[type="text"],
+.vpb-form-row input[type="number"],
+.vpb-form-row select,
+.vpb-form-row textarea {
+    width: 100%;
+}
+
+.vpb-form-row .description {
+    color: #646970;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.vpb-image-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vpb-image-preview {
+    width: 60px;
+    height: 60px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f1;
+}
+
+.vpb-image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
 </style>
 
 <script>
