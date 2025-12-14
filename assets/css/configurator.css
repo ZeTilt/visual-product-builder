@@ -79,12 +79,16 @@
     justify-content: center;
     flex-shrink: 0;
     animation: vpb-pop-in 0.3s ease;
+    background-color: var(--element-color, #4F9ED9);
+    border-radius: var(--vpb-radius-sm);
+    padding: 6px;
 }
 
 .vpb-preview-element img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    filter: brightness(0) invert(1);
 }
 
 @keyframes vpb-pop-in {

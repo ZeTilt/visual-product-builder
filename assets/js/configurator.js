@@ -394,8 +394,8 @@
             const div = document.createElement('div');
             div.className = 'vpb-preview-element';
             div.style.opacity = '0';
-            div.style.color = element.colorHex || '#4F9ED9';
-            div.innerHTML = `<img src="${element.svg}" alt="${element.name}" style="color: inherit;">`;
+            div.style.setProperty('--element-color', element.colorHex || '#4F9ED9');
+            div.innerHTML = `<img src="${element.svg}" alt="${element.name}">`;
             preview.appendChild(div);
 
             // Staggered pop-in animation
