@@ -25,6 +25,9 @@ class VPB_Order {
         // Display in order admin
         add_action( 'woocommerce_admin_order_item_headers', array( $this, 'admin_order_item_headers' ) );
         add_action( 'woocommerce_admin_order_item_values', array( $this, 'admin_order_item_values' ), 10, 3 );
+
+        // Display preview in frontend order details
+        add_filter( 'woocommerce_order_item_name', array( $this, 'add_preview_to_order_item_name' ), 10, 2 );
     }
 
     /**
@@ -65,8 +68,13 @@ class VPB_Order {
             true
         );
 
-        // Store image data reference for later processing
-        if ( isset( $values['vpb_image_data'] ) ) {
+        // Store image data directly (more reliable than retrieving from cart later)
+        if ( isset( $values['vpb_image_data'] ) && ! empty( $values['vpb_image_data'] ) ) {
+            $item->add_meta_data(
+                '_vpb_image_data',
+                $values['vpb_image_data'],
+                true
+            );
             $item->add_meta_data(
                 '_vpb_has_image',
                 'pending',
@@ -83,70 +91,96 @@ class VPB_Order {
     public function save_custom_image( $order ) {
         $order_id = $order->get_id();
 
-        // Get cart to access image data
-        $cart = WC()->cart;
-        if ( ! $cart ) {
-            return;
-        }
-
         foreach ( $order->get_items() as $item_id => $item ) {
             // Check if this item has pending image
             if ( $item->get_meta( '_vpb_has_image' ) !== 'pending' ) {
                 continue;
             }
 
-            // Find corresponding cart item
-            $cart_item_key = $this->find_cart_item_key( $cart, $item );
-            if ( ! $cart_item_key ) {
-                continue;
-            }
-
-            $cart_item = $cart->get_cart_item( $cart_item_key );
-            if ( ! isset( $cart_item['vpb_image_data'] ) ) {
+            // Get image data from order item meta (stored during checkout)
+            $image_data = $item->get_meta( '_vpb_image_data' );
+            if ( empty( $image_data ) ) {
+                wc_update_order_item_meta( $item_id, '_vpb_has_image', 'no_data' );
                 continue;
             }
 
             // Process and save image
-            $attachment_id = $this->process_image( $cart_item['vpb_image_data'], $order_id, $item_id );
+            $attachment_id = $this->process_image( $image_data, $order_id, $item_id );
 
             if ( $attachment_id ) {
                 // Update item meta with attachment ID
                 wc_update_order_item_meta( $item_id, '_vpb_image_id', $attachment_id );
                 wc_update_order_item_meta( $item_id, '_vpb_has_image', 'saved' );
+
+                // Clean up the large base64 data from order meta (no longer needed)
+                wc_delete_order_item_meta( $item_id, '_vpb_image_data' );
             } else {
                 wc_update_order_item_meta( $item_id, '_vpb_has_image', 'failed' );
+
+                // Clean up the base64 data even on failure (it's still stored in notifications)
+                wc_delete_order_item_meta( $item_id, '_vpb_image_data' );
+
+                // CRITICAL: Notify admin about failed image save
+                $this->notify_image_save_failure( $order, $item_id, $item );
             }
         }
     }
 
     /**
-     * Find cart item key matching order item
+     * Notify admin when image save fails
      *
-     * @param WC_Cart               $cart Cart object.
-     * @param WC_Order_Item_Product $item Order item.
-     * @return string|false
+     * @param WC_Order              $order   Order object.
+     * @param int                   $item_id Item ID.
+     * @param WC_Order_Item_Product $item    Order item.
      */
-    private function find_cart_item_key( $cart, $item ) {
-        $product_id   = $item->get_product_id();
-        $variation_id = $item->get_variation_id();
-        $vpb_elements = $item->get_meta( '_vpb_elements' );
+    private function notify_image_save_failure( $order, $item_id, $item ) {
+        $order_id     = $order->get_id();
+        $product_name = $item->get_name();
 
-        foreach ( $cart->get_cart() as $cart_item_key => $cart_item ) {
-            if ( $cart_item['product_id'] !== $product_id ) {
-                continue;
-            }
-            if ( $cart_item['variation_id'] !== $variation_id ) {
-                continue;
-            }
-            if ( ! isset( $cart_item['vpb_elements'] ) ) {
-                continue;
-            }
-            if ( wp_json_encode( $cart_item['vpb_elements'] ) === wp_json_encode( $vpb_elements ) ) {
-                return $cart_item_key;
-            }
+        // Add order note (visible in admin)
+        $order->add_order_note(
+            sprintf(
+                /* translators: 1: item ID, 2: product name */
+                __( '⚠️ ATTENTION: Failed to save customization image for item #%1$d (%2$s). The customer configuration data is preserved, but the preview image could not be generated. Please contact the customer if needed.', 'visual-product-builder' ),
+                $item_id,
+                $product_name
+            ),
+            0, // Not a customer note
+            true // Added by system
+        );
+
+        // Send email to admin
+        $admin_email = get_option( 'admin_email' );
+        $site_name   = get_bloginfo( 'name' );
+
+        $subject = sprintf(
+            /* translators: 1: site name, 2: order ID */
+            __( '[%1$s] VPB Image Save Failed - Order #%2$d', 'visual-product-builder' ),
+            $site_name,
+            $order_id
+        );
+
+        $message = sprintf(
+            /* translators: 1: order ID, 2: item ID, 3: product name, 4: order edit URL */
+            __( "The customization image could not be saved for order #%1\$d.\n\nItem ID: %2\$d\nProduct: %3\$s\n\nThe order has been created successfully and the configuration data is preserved in the order meta.\nHowever, the visual preview image failed to save. This could be due to:\n- Insufficient disk space\n- File permission issues\n- Invalid image data from client\n\nPlease check the order and contact the customer if clarification is needed.\n\nView order: %4\$s", 'visual-product-builder' ),
+            $order_id,
+            $item_id,
+            $product_name,
+            admin_url( 'post.php?post=' . $order_id . '&action=edit' )
+        );
+
+        wp_mail( $admin_email, $subject, $message );
+
+        // Log the error.
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Debug logging only when WP_DEBUG is enabled.
+            error_log( sprintf(
+                '[VPB] CRITICAL: Image save failed for order #%d, item #%d (%s). Admin notified.',
+                $order_id,
+                $item_id,
+                $product_name
+            ) );
         }
-
-        return false;
     }
 
     /**
@@ -162,14 +196,33 @@ class VPB_Order {
         $image_data = str_replace( 'data:image/png;base64,', '', $image_data );
         $image_data = str_replace( ' ', '+', $image_data );
 
-        // Decode
-        $decoded = base64_decode( $image_data );
+        // SECURITY: Estimate decoded size BEFORE decoding to prevent memory DoS.
+        // Base64 encoding adds ~33% overhead, so decoded size ≈ encoded size * 3/4.
+        // We add a small margin for safety.
+        $max_size       = 5 * 1024 * 1024; // 5MB max
+        $estimated_size = ( strlen( $image_data ) * 3 ) / 4;
+
+        if ( $estimated_size > $max_size ) {
+            if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Debug logging only when WP_DEBUG is enabled.
+                error_log( sprintf(
+                    '[VPB] Rejected oversized image upload: estimated %.2f MB (max %.2f MB)',
+                    $estimated_size / 1024 / 1024,
+                    $max_size / 1024 / 1024
+                ) );
+            }
+            return false;
+        }
+
+        // Decode base64 PNG image generated by frontend canvas (user configuration preview).
+        // This is legitimate use for processing user-submitted canvas images, not code obfuscation.
+        $decoded = base64_decode( $image_data, true );
         if ( ! $decoded ) {
             return false;
         }
 
-        // Check size (max 5MB)
-        if ( strlen( $decoded ) > 5 * 1024 * 1024 ) {
+        // Double-check actual size after decode (in case estimation was off)
+        if ( strlen( $decoded ) > $max_size ) {
             return false;
         }
 
@@ -199,9 +252,10 @@ class VPB_Order {
             return false;
         }
 
-        // Create attachment
+        // Create attachment.
         $attachment = array(
             'post_mime_type' => 'image/png',
+            /* translators: %d: order ID */
             'post_title'     => sprintf( __( 'Configuration commande #%d', 'visual-product-builder' ), $order_id ),
             'post_content'   => '',
             'post_status'    => 'inherit',
@@ -210,7 +264,7 @@ class VPB_Order {
         $attachment_id = wp_insert_attachment( $attachment, $filepath, $order_id );
 
         if ( is_wp_error( $attachment_id ) ) {
-            unlink( $filepath );
+            wp_delete_file( $filepath );
             return false;
         }
 
@@ -220,6 +274,40 @@ class VPB_Order {
         wp_update_attachment_metadata( $attachment_id, $attach_data );
 
         return $attachment_id;
+    }
+
+    /**
+     * Add preview image to order item name on frontend
+     *
+     * @param string        $name Product name HTML.
+     * @param WC_Order_Item $item Order item.
+     * @return string
+     */
+    public function add_preview_to_order_item_name( $name, $item ) {
+        // Only for product items with VPB data
+        if ( ! $item instanceof WC_Order_Item_Product ) {
+            return $name;
+        }
+
+        $image_id = $item->get_meta( '_vpb_image_id' );
+        if ( ! $image_id ) {
+            return $name;
+        }
+
+        $image_url = wp_get_attachment_url( $image_id );
+        if ( ! $image_url ) {
+            return $name;
+        }
+
+        // Add preview image below product name
+        $preview_html = '<div class="vpb-order-preview-wrapper" style="margin-top: 10px;">';
+        $preview_html .= '<img src="' . esc_url( $image_url ) . '" ';
+        $preview_html .= 'alt="' . esc_attr__( 'Aperçu personnalisation', 'visual-product-builder' ) . '" ';
+        $preview_html .= 'class="vpb-order-preview" ';
+        $preview_html .= 'style="max-width: 200px; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
+        $preview_html .= '</div>';
+
+        return $name . $preview_html;
     }
 
     /**
@@ -239,7 +327,9 @@ class VPB_Order {
     public function admin_order_item_values( $product, $item, $item_id ) {
         echo '<td class="vpb-preview">';
 
-        $image_id = $item->get_meta( '_vpb_image_id' );
+        $image_status = $item->get_meta( '_vpb_has_image' );
+        $image_id     = $item->get_meta( '_vpb_image_id' );
+
         if ( $image_id ) {
             $image_url = wp_get_attachment_url( $image_id );
             if ( $image_url ) {
@@ -249,6 +339,14 @@ class VPB_Order {
                     esc_url( $image_url )
                 );
             }
+        } elseif ( 'failed' === $image_status ) {
+            // Show warning for failed image save
+            echo '<span style="color: #d63638; font-weight: bold;" title="' .
+                esc_attr__( 'Image save failed. Check order notes for details.', 'visual-product-builder' ) .
+                '">⚠️ ' . esc_html__( 'Image failed', 'visual-product-builder' ) . '</span>';
+        } elseif ( 'pending' === $image_status ) {
+            // Still pending (shouldn't happen normally)
+            echo '<span style="color: #dba617;">' . esc_html__( 'Pending...', 'visual-product-builder' ) . '</span>';
         } else {
             echo '—';
         }

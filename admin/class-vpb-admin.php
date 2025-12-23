@@ -127,6 +127,24 @@ class VPB_Admin {
                 'confirmImportSample' => __( 'Import sample data? This will add elements to your library.', 'visual-product-builder' ),
                 'importing'           => __( 'Importing...', 'visual-product-builder' ),
                 'importSampleData'    => __( 'Import Sample Data', 'visual-product-builder' ),
+                // Collections page strings
+                'addCollection'       => __( 'Add Collection', 'visual-product-builder' ),
+                'editCollection'      => __( 'Edit Collection', 'visual-product-builder' ),
+                'confirmDeleteColl'   => __( 'Do you really want to delete this collection? Elements will not be deleted but will no longer be assigned.', 'visual-product-builder' ),
+                /* translators: %d: number of collections */
+                'confirmPurge'        => __( "Do you really want to DELETE EVERYTHING?\n\n• %d collections\n• All elements\n\nThis action is irreversible.", 'visual-product-builder' ),
+                'forcePurgeConfirm'   => __( 'Type "PURGE" to confirm forced deletion despite pending orders:', 'visual-product-builder' ),
+                'purgeAborted'        => __( 'Purge aborted. You must type "PURGE" exactly.', 'visual-product-builder' ),
+                'deleting'            => __( 'Deleting...', 'visual-product-builder' ),
+                'purgeAll'            => __( 'Purge All', 'visual-product-builder' ),
+                'chooseThumbnail'     => __( 'Choose Thumbnail', 'visual-product-builder' ),
+                'useThisImage'        => __( 'Use This Image', 'visual-product-builder' ),
+                'importInProgress'    => __( 'Import in progress...', 'visual-product-builder' ),
+                /* translators: %d: number of elements imported */
+                'elementsImported'    => __( '%d element(s) imported', 'visual-product-builder' ),
+                /* translators: %d: number of errors */
+                'errors'              => __( '%d error(s):', 'visual-product-builder' ),
+                'networkError'        => __( 'Network Error', 'visual-product-builder' ),
             ),
         ) );
     }
@@ -139,10 +157,11 @@ class VPB_Admin {
             wp_die( esc_html__( 'You do not have permission to access this page.', 'visual-product-builder' ) );
         }
 
-        // Handle custom CSS save
+        // Handle custom CSS save.
         if ( isset( $_POST['vpb_save_css'] ) && isset( $_POST['vpb_css_nonce'] ) ) {
-            if ( wp_verify_nonce( $_POST['vpb_css_nonce'], 'vpb_save_custom_css' ) ) {
-                $custom_css = isset( $_POST['vpb_custom_css'] ) ? wp_strip_all_tags( $_POST['vpb_custom_css'] ) : '';
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification.
+            if ( wp_verify_nonce( wp_unslash( $_POST['vpb_css_nonce'] ), 'vpb_save_custom_css' ) ) {
+                $custom_css = isset( $_POST['vpb_custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['vpb_custom_css'] ) ) : '';
                 update_option( 'vpb_custom_css', $custom_css );
                 add_settings_error( 'vpb_messages', 'vpb_css_saved', __( 'Custom CSS saved.', 'visual-product-builder' ), 'success' );
             }
@@ -206,7 +225,17 @@ class VPB_Admin {
         } else {
             // Create new
             $result = VPB_Library::add_element( $data );
-            $id     = $result;
+
+            // Check for limit error
+            if ( is_wp_error( $result ) ) {
+                wp_send_json_error( array(
+                    'message'      => wp_strip_all_tags( $result->get_error_message() ),
+                    'limit_reached' => true,
+                    'upgrade_url'  => VPB_PRICING_URL,
+                ) );
+            }
+
+            $id = $result;
         }
 
         if ( $result ) {
@@ -296,13 +325,21 @@ class VPB_Admin {
     }
 
     /**
-     * AJAX: Bulk update prices
+     * AJAX: Bulk update prices (PRO feature)
      */
     public function ajax_bulk_update_price() {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
+        }
+
+        // Bulk operations require PRO
+        if ( ! vpb_can_use_feature( 'bulk_operations' ) ) {
+            wp_send_json_error( array(
+                'message'     => __( 'Bulk operations require a PRO license', 'visual-product-builder' ),
+                'upgrade_url' => VPB_PRICING_URL,
+            ) );
         }
 
         $ids   = isset( $_POST['ids'] ) ? array_map( 'absint', (array) $_POST['ids'] ) : array();
@@ -385,7 +422,17 @@ class VPB_Admin {
             $result = VPB_Collection::update_collection( $id, $data );
         } else {
             $result = VPB_Collection::add_collection( $data );
-            $id     = $result;
+
+            // Check for limit error
+            if ( is_wp_error( $result ) ) {
+                wp_send_json_error( array(
+                    'message'       => wp_strip_all_tags( $result->get_error_message() ),
+                    'limit_reached' => true,
+                    'upgrade_url'   => VPB_PRICING_URL,
+                ) );
+            }
+
+            $id = $result;
         }
 
         if ( $result ) {
@@ -433,7 +480,30 @@ class VPB_Admin {
             wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
         }
 
+        $force = isset( $_POST['force'] ) && 'true' === $_POST['force'];
+
+        // Check for pending/processing orders with VPB customizations
+        $pending_orders = $this->get_orders_with_vpb_customizations();
+
+        if ( ! empty( $pending_orders ) && ! $force ) {
+            wp_send_json_error( array(
+                'message'        => sprintf(
+                    /* translators: %d: number of pending orders */
+                    __( 'Cannot purge: %d order(s) with customizations are pending/processing. Purging would make order data unreadable. Use "Force purge" to proceed anyway.', 'visual-product-builder' ),
+                    count( $pending_orders )
+                ),
+                'pending_orders' => count( $pending_orders ),
+                'requires_force' => true,
+            ) );
+        }
+
         global $wpdb;
+
+        // Log the purge action
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe, constructed from $wpdb->prefix. TRUNCATE cannot use prepare().
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
+        $elements_count    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}vpb_elements" );
+        $collections_count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}vpb_collections" );
 
         // Clear elements table
         $elements_table = $wpdb->prefix . 'vpb_elements';
@@ -446,8 +516,63 @@ class VPB_Admin {
         // Clear product-collection relationships
         $product_collections_table = $wpdb->prefix . 'vpb_product_collections';
         $wpdb->query( "TRUNCATE TABLE $product_collections_table" );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+        // Log purge to WordPress error log for audit trail
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            $current_user = wp_get_current_user();
+            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug logging for troubleshooting.
+            error_log( sprintf(
+                '[VPB] PURGE: User "%s" (ID: %d) purged %d collections and %d elements. Force: %s. Pending orders: %d.',
+                $current_user->user_login,
+                $current_user->ID,
+                $collections_count,
+                $elements_count,
+                $force ? 'yes' : 'no',
+                count( $pending_orders )
+            ) );
+        }
 
         wp_send_json_success( array( 'message' => __( 'All collections and elements have been deleted', 'visual-product-builder' ) ) );
+    }
+
+    /**
+     * Get WooCommerce orders with VPB customizations that are pending or processing.
+     *
+     * @return array Array of order IDs.
+     */
+    private function get_orders_with_vpb_customizations() {
+        if ( ! function_exists( 'wc_get_orders' ) ) {
+            return array();
+        }
+
+        // Get orders that are pending, processing, or on-hold
+        $orders = wc_get_orders( array(
+            'status' => array( 'pending', 'processing', 'on-hold' ),
+            'limit'  => -1,
+            'return' => 'ids',
+        ) );
+
+        $orders_with_vpb = array();
+
+        foreach ( $orders as $order_id ) {
+            $order = wc_get_order( $order_id );
+            if ( ! $order ) {
+                continue;
+            }
+
+            foreach ( $order->get_items() as $item ) {
+                // Check if item has VPB customization meta
+                $vpb_config = $item->get_meta( '_vpb_configuration' );
+                if ( ! empty( $vpb_config ) ) {
+                    $orders_with_vpb[] = $order_id;
+                    break; // One VPB item is enough, move to next order
+                }
+            }
+        }
+
+        return $orders_with_vpb;
     }
 
     /**
@@ -464,6 +589,7 @@ class VPB_Admin {
             wp_send_json_error( array( 'message' => __( 'No file received', 'visual-product-builder' ) ) );
         }
 
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- File upload is validated via wp_handle_upload() which performs full sanitization and type checking.
         $file = $_FILES['file'];
 
         // Allowed image extensions
@@ -479,10 +605,10 @@ class VPB_Admin {
         $element_name = pathinfo( $file['name'], PATHINFO_FILENAME );
         $element_slug = sanitize_title( $element_name );
 
-        // Get other parameters
+        // Get other parameters.
         $collection_id = isset( $_POST['collection_id'] ) ? absint( $_POST['collection_id'] ) : null;
-        $color_hex     = isset( $_POST['color_hex'] ) ? sanitize_hex_color( $_POST['color_hex'] ) : '#4F9ED9';
-        $category      = isset( $_POST['category'] ) ? sanitize_key( $_POST['category'] ) : 'letter';
+        $color_hex     = isset( $_POST['color_hex'] ) ? sanitize_hex_color( wp_unslash( $_POST['color_hex'] ) ) : '#4F9ED9';
+        $category      = isset( $_POST['category'] ) ? sanitize_key( wp_unslash( $_POST['category'] ) ) : 'letter';
         $price         = isset( $_POST['price'] ) ? floatval( $_POST['price'] ) : 0.00;
 
         // Get color name from collection or generate one
@@ -492,6 +618,20 @@ class VPB_Admin {
             if ( $collection ) {
                 $color_name = sanitize_title( $collection->name );
             }
+        }
+
+        // Sanitize SVG files before upload (security: prevent XSS/XXE)
+        if ( 'svg' === $ext ) {
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Reading temp upload file before sanitization.
+            $svg_content = file_get_contents( $file['tmp_name'] );
+            $sanitized   = $this->sanitize_svg( $svg_content );
+
+            if ( false === $sanitized ) {
+                wp_send_json_error( array( 'message' => __( 'SVG file contains potentially dangerous content', 'visual-product-builder' ) ) );
+            }
+
+            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writing sanitized content to temp upload file.
+            file_put_contents( $file['tmp_name'], $sanitized );
         }
 
         // Upload file to WordPress uploads directory
@@ -526,6 +666,15 @@ class VPB_Admin {
             );
 
             $element_id = VPB_Library::add_element( $element_data );
+
+            // Check for limit error
+            if ( is_wp_error( $element_id ) ) {
+                wp_send_json_error( array(
+                    'message'       => wp_strip_all_tags( $element_id->get_error_message() ),
+                    'limit_reached' => true,
+                    'upgrade_url'   => VPB_PRICING_URL,
+                ) );
+            }
 
             if ( $element_id ) {
                 wp_send_json_success( array(
@@ -567,13 +716,21 @@ class VPB_Admin {
     }
 
     /**
-     * AJAX: Bulk assign collection to elements
+     * AJAX: Bulk assign collection to elements (PRO feature)
      */
     public function ajax_bulk_assign_collection() {
         check_ajax_referer( 'vpb_admin_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             wp_send_json_error( array( 'message' => __( 'Permission denied', 'visual-product-builder' ) ) );
+        }
+
+        // Bulk operations require PRO
+        if ( ! vpb_can_use_feature( 'bulk_operations' ) ) {
+            wp_send_json_error( array(
+                'message'     => __( 'Bulk operations require a PRO license', 'visual-product-builder' ),
+                'upgrade_url' => VPB_PRICING_URL,
+            ) );
         }
 
         $ids           = isset( $_POST['ids'] ) ? array_map( 'absint', (array) $_POST['ids'] ) : array();
@@ -623,28 +780,42 @@ class VPB_Admin {
 
         $collections         = VPB_Collection::get_collections( array( 'active' => 1 ) );
         $selected_ids        = VPB_Collection::get_product_collection_ids( $post->ID );
-        $support_image       = get_post_meta( $post->ID, '_vpb_support_image', true );
+        $can_support_image   = vpb_can_use_feature( 'support_image' );
+        $support_image       = $can_support_image ? get_post_meta( $post->ID, '_vpb_support_image', true ) : '';
         ?>
 
-        <!-- Support image -->
+        <!-- Support image (BUSINESS feature) -->
         <p>
-            <strong><?php esc_html_e( 'Support Image', 'visual-product-builder' ); ?></strong><br>
+            <strong>
+                <?php esc_html_e( 'Support Image', 'visual-product-builder' ); ?>
+                <?php if ( ! $can_support_image ) : ?>
+                    <span style="display: inline-block; padding: 2px 6px; font-size: 10px; font-weight: 600; text-transform: uppercase; border-radius: 3px; margin-left: 5px; vertical-align: middle; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff;"><?php esc_html_e( 'BUSINESS', 'visual-product-builder' ); ?></span>
+                <?php endif; ?>
+            </strong><br>
             <small><?php esc_html_e( 'Image on which elements will be placed.', 'visual-product-builder' ); ?></small>
         </p>
-        <div class="vpb-support-image-field" style="margin-bottom: 15px;">
-            <div id="vpb-support-image-preview" style="margin-bottom: 10px; <?php echo empty( $support_image ) ? 'display: none;' : ''; ?>">
-                <?php if ( $support_image ) : ?>
-                    <img src="<?php echo esc_url( $support_image ); ?>" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
-                <?php endif; ?>
+        <?php if ( $can_support_image ) : ?>
+            <div class="vpb-support-image-field" style="margin-bottom: 15px;">
+                <div id="vpb-support-image-preview" style="margin-bottom: 10px; <?php echo empty( $support_image ) ? 'display: none;' : ''; ?>">
+                    <?php if ( $support_image ) : ?>
+                        <img src="<?php echo esc_url( $support_image ); ?>" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px;">
+                    <?php endif; ?>
+                </div>
+                <input type="hidden" name="vpb_support_image" id="vpb-support-image-input" value="<?php echo esc_url( $support_image ); ?>">
+                <button type="button" class="button" id="vpb-support-image-btn">
+                    <?php echo $support_image ? esc_html__( 'Change image', 'visual-product-builder' ) : esc_html__( 'Choose an image', 'visual-product-builder' ); ?>
+                </button>
+                <button type="button" class="button" id="vpb-support-image-remove" style="<?php echo empty( $support_image ) ? 'display: none;' : ''; ?>">
+                    <?php esc_html_e( 'Remove', 'visual-product-builder' ); ?>
+                </button>
             </div>
-            <input type="hidden" name="vpb_support_image" id="vpb-support-image-input" value="<?php echo esc_url( $support_image ); ?>">
-            <button type="button" class="button" id="vpb-support-image-btn">
-                <?php echo $support_image ? esc_html__( 'Change image', 'visual-product-builder' ) : esc_html__( 'Choose an image', 'visual-product-builder' ); ?>
-            </button>
-            <button type="button" class="button" id="vpb-support-image-remove" style="<?php echo empty( $support_image ) ? 'display: none;' : ''; ?>">
-                <?php esc_html_e( 'Remove', 'visual-product-builder' ); ?>
-            </button>
-        </div>
+        <?php else : ?>
+            <p style="margin-bottom: 15px;">
+                <a href="<?php echo esc_url( VPB_PRICING_URL ); ?>" target="_blank" class="button button-secondary" style="width: 100%; text-align: center;">
+                    <?php esc_html_e( 'Upgrade to BUSINESS', 'visual-product-builder' ); ?>
+                </a>
+            </p>
+        <?php endif; ?>
 
         <hr style="margin: 15px 0;">
 
@@ -668,7 +839,7 @@ class VPB_Admin {
                         <?php echo esc_html( $collection->name ); ?>
                         <small>(<?php
                             /* translators: %d: number of elements */
-                            printf( esc_html__( '%d elements', 'visual-product-builder' ), VPB_Collection::get_element_count( $collection->id ) );
+                            printf( esc_html__( '%d elements', 'visual-product-builder' ), intval( VPB_Collection::get_element_count( $collection->id ) ) );
                         ?>)</small>
                     </label>
                 <?php endforeach; ?>
@@ -724,7 +895,8 @@ class VPB_Admin {
             return;
         }
 
-        if ( ! wp_verify_nonce( $_POST['vpb_product_collections_nonce'], 'vpb_product_collections' ) ) {
+        // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verification.
+        if ( ! wp_verify_nonce( wp_unslash( $_POST['vpb_product_collections_nonce'] ), 'vpb_product_collections' ) ) {
             return;
         }
 
@@ -736,16 +908,84 @@ class VPB_Admin {
             return;
         }
 
-        // Save collections
+        // Save collections.
         $collection_ids = isset( $_POST['vpb_collections'] ) ? array_map( 'absint', $_POST['vpb_collections'] ) : array();
         VPB_Collection::set_product_collections( $post_id, $collection_ids );
 
-        // Save support image
-        $support_image = isset( $_POST['vpb_support_image'] ) ? esc_url_raw( $_POST['vpb_support_image'] ) : '';
-        if ( $support_image ) {
-            update_post_meta( $post_id, '_vpb_support_image', $support_image );
-        } else {
-            delete_post_meta( $post_id, '_vpb_support_image' );
+        // Save support image (BUSINESS feature only).
+        if ( vpb_can_use_feature( 'support_image' ) ) {
+            $support_image = isset( $_POST['vpb_support_image'] ) ? esc_url_raw( wp_unslash( $_POST['vpb_support_image'] ) ) : '';
+            if ( $support_image ) {
+                update_post_meta( $post_id, '_vpb_support_image', $support_image );
+            } else {
+                delete_post_meta( $post_id, '_vpb_support_image' );
+            }
         }
+    }
+
+    /**
+     * Sanitize SVG content to prevent XSS and XXE attacks.
+     *
+     * @param string $svg_content Raw SVG content.
+     * @return string|false Sanitized SVG content or false if malicious.
+     */
+    private function sanitize_svg( $svg_content ) {
+        // Remove XML declaration and DOCTYPE (XXE prevention)
+        $svg_content = preg_replace( '/\s*<\?xml[^>]*\?>\s*/i', '', $svg_content );
+        $svg_content = preg_replace( '/\s*<!DOCTYPE[^>]*>\s*/i', '', $svg_content );
+
+        // Remove ENTITY declarations (XXE prevention)
+        $svg_content = preg_replace( '/<!ENTITY[^>]*>/i', '', $svg_content );
+
+        // Remove script tags and their content
+        $svg_content = preg_replace( '/<script[^>]*>.*?<\/script>/is', '', $svg_content );
+        $svg_content = preg_replace( '/<script[^>]*\/>/i', '', $svg_content );
+
+        // Remove event handlers (onclick, onload, onerror, onmouseover, etc.)
+        $svg_content = preg_replace( '/\s+on\w+\s*=\s*["\'][^"\']*["\']/i', '', $svg_content );
+        $svg_content = preg_replace( '/\s+on\w+\s*=\s*[^\s>]*/i', '', $svg_content );
+
+        // Remove javascript: URLs
+        $svg_content = preg_replace( '/href\s*=\s*["\']?\s*javascript:[^"\'>\s]*/i', '', $svg_content );
+        $svg_content = preg_replace( '/xlink:href\s*=\s*["\']?\s*javascript:[^"\'>\s]*/i', '', $svg_content );
+
+        // Remove data: URLs that could contain scripts (allow data:image only)
+        $svg_content = preg_replace( '/href\s*=\s*["\']?\s*data:(?!image\/)[^"\'>\s]*/i', '', $svg_content );
+        $svg_content = preg_replace( '/xlink:href\s*=\s*["\']?\s*data:(?!image\/)[^"\'>\s]*/i', '', $svg_content );
+
+        // Remove foreignObject (can embed HTML/scripts)
+        $svg_content = preg_replace( '/<foreignObject[^>]*>.*?<\/foreignObject>/is', '', $svg_content );
+
+        // Remove use elements pointing to external resources
+        $svg_content = preg_replace( '/<use[^>]*xlink:href\s*=\s*["\'][^#][^"\']*["\'][^>]*>/i', '', $svg_content );
+
+        // Remove potentially dangerous elements
+        $dangerous_elements = array( 'iframe', 'embed', 'object', 'applet', 'form', 'input', 'button' );
+        foreach ( $dangerous_elements as $element ) {
+            $svg_content = preg_replace( '/<' . $element . '[^>]*>.*?<\/' . $element . '>/is', '', $svg_content );
+            $svg_content = preg_replace( '/<' . $element . '[^>]*\/>/i', '', $svg_content );
+        }
+
+        // Final check: reject if any dangerous patterns remain
+        $dangerous_patterns = array(
+            '/<script/i',
+            '/javascript\s*:/i',
+            '/\s+on\w+\s*=/i',
+            '/<foreignObject/i',
+            '/<!ENTITY/i',
+        );
+
+        foreach ( $dangerous_patterns as $pattern ) {
+            if ( preg_match( $pattern, $svg_content ) ) {
+                return false;
+            }
+        }
+
+        // Ensure the content starts with an SVG tag
+        if ( ! preg_match( '/<svg[^>]*>/i', $svg_content ) ) {
+            return false;
+        }
+
+        return trim( $svg_content );
     }
 }

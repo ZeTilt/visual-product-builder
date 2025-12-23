@@ -79,7 +79,8 @@ class VPB_Shortcode {
         }
 
         // Get elements - either by collections or all active
-        $elements_data = array();
+        $elements_data     = array();
+        $all_collections   = array(); // All available collections when no specific ones assigned
 
         if ( ! empty( $product_collections ) ) {
             // Get elements from assigned collections
@@ -92,6 +93,8 @@ class VPB_Shortcode {
         } else {
             // Fallback to all active elements
             $elements_data = VPB_Library::get_elements();
+            // Get all collections for filtering
+            $all_collections = VPB_Collection::get_collections( array( 'active' => 1 ) );
         }
 
         // Group elements by category
@@ -113,8 +116,11 @@ class VPB_Shortcode {
         }
         sort( $colors );
 
-        // Get support image for this product
-        $support_image = get_post_meta( $product_id, '_vpb_support_image', true );
+        // Get support image for this product (BUSINESS feature only)
+        $support_image = '';
+        if ( vpb_can_use_feature( 'support_image' ) ) {
+            $support_image = get_post_meta( $product_id, '_vpb_support_image', true );
+        }
 
         // Start output buffering
         ob_start();

@@ -67,13 +67,15 @@ class VPB_Collection {
         $orderby = in_array( $args['orderby'], $allowed_orderby, true ) ? $args['orderby'] : 'sort_order';
         $order   = strtoupper( $args['order'] ) === 'DESC' ? 'DESC' : 'ASC';
 
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe; $where_clause, $orderby, and $order are sanitized above.
         $sql = "SELECT * FROM {$table} WHERE {$where_clause} ORDER BY {$orderby} {$order}";
 
         if ( $args['limit'] > 0 ) {
             $sql .= $wpdb->prepare( ' LIMIT %d OFFSET %d', $args['limit'], $args['offset'] );
         }
 
-        return $wpdb->get_results( $sql );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- SQL is built safely above with sanitized values.
+		return $wpdb->get_results( $sql );
     }
 
     /**
@@ -87,9 +89,11 @@ class VPB_Collection {
 
         $table = self::get_table_name();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         return $wpdb->get_row(
             $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     }
 
     /**
@@ -103,18 +107,125 @@ class VPB_Collection {
 
         $table = self::get_table_name();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         return $wpdb->get_row(
             $wpdb->prepare( "SELECT * FROM {$table} WHERE slug = %s", $slug )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    }
+
+    /**
+     * Check if user can create more collections based on plan limits
+     *
+     * @return array Array with 'allowed' (bool) and 'message' (string).
+     */
+    public static function can_create_collection() {
+        $limits = vpb_get_plan_limits();
+        $max_collections = $limits['collections'];
+
+        // -1 means unlimited
+        if ( $max_collections === -1 ) {
+            return array(
+                'allowed' => true,
+                'message' => '',
+            );
+        }
+
+        // Only count custom collections (not sample ones)
+        $current_count = self::get_custom_collection_count();
+
+        if ( $current_count >= $max_collections ) {
+            $plan = vpb_get_plan_name();
+            $upgrade_url = VPB_PRICING_URL;
+
+            return array(
+                'allowed' => false,
+                'current' => $current_count,
+                'max'     => $max_collections,
+                'message' => sprintf(
+                    /* translators: 1: current count, 2: max allowed, 3: plan name, 4: upgrade URL */
+                    __( 'You have reached the limit of %1$d/%2$d custom collection(s) for your %3$s plan. <a href="%4$s">Upgrade to add more</a>.', 'visual-product-builder' ),
+                    $current_count,
+                    $max_collections,
+                    strtoupper( $plan ),
+                    esc_url( $upgrade_url )
+                ),
+            );
+        }
+
+        return array(
+            'allowed' => true,
+            'current' => $current_count,
+            'max'     => $max_collections,
+            'message' => '',
+        );
+    }
+
+    /**
+     * Get total collection count
+     *
+     * @return int
+     */
+    public static function get_collection_count() {
+        global $wpdb;
+        $table = self::get_table_name();
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
+        return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
+    }
+
+    /**
+     * Get custom collection count (excludes sample collections)
+     *
+     * @return int
+     */
+    public static function get_custom_collection_count() {
+        global $wpdb;
+        $table = self::get_table_name();
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
+        return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE is_sample = 0" );
+    }
+
+    /**
+     * Get sample collection count
+     *
+     * @return int
+     */
+    public static function get_sample_collection_count() {
+        global $wpdb;
+        $table = self::get_table_name();
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
+        return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE is_sample = 1" );
+    }
+
+    /**
+     * Check if a collection is a sample collection
+     *
+     * @param int $collection_id Collection ID.
+     * @return bool
+     */
+    public static function is_sample_collection( $collection_id ) {
+        $collection = self::get_collection( $collection_id );
+        return $collection && ! empty( $collection->is_sample );
     }
 
     /**
      * Add a new collection
      *
      * @param array $data Collection data.
-     * @return int|false Insert ID or false on failure.
+     * @return int|false|WP_Error Insert ID, false on failure, or WP_Error if limit reached.
      */
     public static function add_collection( $data ) {
+        // Sample collections bypass plan limits
+        $is_sample = ! empty( $data['is_sample'] );
+
+        // Check plan limits only for custom collections
+        if ( ! $is_sample ) {
+            $can_create = self::can_create_collection();
+            if ( ! $can_create['allowed'] ) {
+                return new WP_Error( 'limit_reached', $can_create['message'] );
+            }
+        }
+
         global $wpdb;
 
         $table = self::get_table_name();
@@ -125,6 +236,7 @@ class VPB_Collection {
             'description'   => '',
             'color_hex'     => '#4F9ED9',
             'thumbnail_url' => '',
+            'is_sample'     => 0,
             'sort_order'    => 0,
             'active'        => 1,
         );
@@ -139,6 +251,7 @@ class VPB_Collection {
         // Ensure unique slug
         $data['slug'] = self::get_unique_slug( $data['slug'] );
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table requires direct query.
         $result = $wpdb->insert(
             $table,
             array(
@@ -147,10 +260,11 @@ class VPB_Collection {
                 'description'   => sanitize_textarea_field( $data['description'] ),
                 'color_hex'     => sanitize_hex_color( $data['color_hex'] ) ?: '#4F9ED9',
                 'thumbnail_url' => esc_url_raw( $data['thumbnail_url'] ),
+                'is_sample'     => $is_sample ? 1 : 0,
                 'sort_order'    => intval( $data['sort_order'] ),
                 'active'        => intval( $data['active'] ),
             ),
-            array( '%s', '%s', '%s', '%s', '%s', '%d', '%d' )
+            array( '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d' )
         );
 
         return $result ? $wpdb->insert_id : false;
@@ -211,6 +325,7 @@ class VPB_Collection {
             return false;
         }
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         $result = $wpdb->update(
             $table,
             $update_data,
@@ -240,6 +355,7 @@ class VPB_Collection {
         self::remove_all_product_associations( $id );
 
         // Delete the collection
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         $result = $wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );
 
         return $result !== false;
@@ -266,7 +382,8 @@ class VPB_Collection {
                 $sql .= $wpdb->prepare( ' AND id != %d', $exclude_id );
             }
 
-            $existing = $wpdb->get_var( $sql );
+            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- SQL built with prepare().
+			$existing = $wpdb->get_var( $sql );
 
             if ( ! $existing ) {
                 break;
@@ -319,9 +436,8 @@ class VPB_Collection {
             $limit_clause = $wpdb->prepare( ' LIMIT %d', $args['limit'] );
         }
 
-        return $wpdb->get_results(
-            "SELECT * FROM {$table_elements} WHERE {$where_clause} ORDER BY {$orderby} {$order}{$limit_clause}"
-        );
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; $where_clause uses prepare(); $orderby/$order sanitized.
+        return $wpdb->get_results( "SELECT * FROM {$table_elements} WHERE {$where_clause} ORDER BY {$orderby} {$order}{$limit_clause}" );
     }
 
     /**
@@ -335,12 +451,14 @@ class VPB_Collection {
 
         $table_elements = $wpdb->prefix . 'vpb_elements';
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         return (int) $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table_elements} WHERE collection_id = %d",
                 $collection_id
             )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     }
 
     /**
@@ -359,15 +477,25 @@ class VPB_Collection {
             return false;
         }
 
-        $element_ids = array_map( 'intval', $element_ids );
-        $ids_string  = implode( ',', $element_ids );
+        $element_ids = array_map( 'absint', $element_ids );
+        $element_ids = array_filter( $element_ids ); // Remove zeros
 
+        if ( empty( $element_ids ) ) {
+            return false;
+        }
+
+        // Build proper prepared statement with placeholders for IN clause
+        $placeholders = implode( ', ', array_fill( 0, count( $element_ids ), '%d' ) );
+        $params       = array_merge( array( absint( $collection_id ) ), $element_ids );
+
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; placeholders are sanitized.
         $result = $wpdb->query(
             $wpdb->prepare(
-                "UPDATE {$table_elements} SET collection_id = %d WHERE id IN ({$ids_string})",
-                $collection_id
+                "UPDATE {$table_elements} SET collection_id = %d WHERE id IN ($placeholders)",
+                $params
             )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
         return $result !== false;
     }
@@ -383,6 +511,7 @@ class VPB_Collection {
 
         $table_elements = $wpdb->prefix . 'vpb_elements';
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         $result = $wpdb->update(
             $table_elements,
             array( 'collection_id' => null ),
@@ -410,6 +539,7 @@ class VPB_Collection {
         $table            = self::get_table_name();
         $table_rel        = self::get_product_collections_table_name();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table names from $wpdb->prefix are safe; custom tables.
         return $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT c.*, pc.sort_order as product_sort_order
@@ -420,6 +550,7 @@ class VPB_Collection {
                 $product_id
             )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     }
 
     /**
@@ -433,12 +564,14 @@ class VPB_Collection {
 
         $table_rel = self::get_product_collections_table_name();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         return $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT collection_id FROM {$table_rel} WHERE product_id = %d ORDER BY sort_order ASC",
                 $product_id
             )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     }
 
     /**
@@ -454,6 +587,7 @@ class VPB_Collection {
         $table_rel = self::get_product_collections_table_name();
 
         // Remove existing associations
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         $wpdb->delete( $table_rel, array( 'product_id' => $product_id ), array( '%d' ) );
 
         if ( empty( $collection_ids ) ) {
@@ -463,6 +597,7 @@ class VPB_Collection {
         // Add new associations
         $sort_order = 0;
         foreach ( $collection_ids as $collection_id ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table requires direct query.
             $wpdb->insert(
                 $table_rel,
                 array(
@@ -490,6 +625,7 @@ class VPB_Collection {
 
         $table_rel = self::get_product_collections_table_name();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         // Check if already exists
         $exists = $wpdb->get_var(
             $wpdb->prepare(
@@ -500,6 +636,7 @@ class VPB_Collection {
         );
 
         if ( $exists ) {
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
             return true;
         }
 
@@ -510,7 +647,9 @@ class VPB_Collection {
                 $product_id
             )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table requires direct query.
         $result = $wpdb->insert(
             $table_rel,
             array(
@@ -536,6 +675,7 @@ class VPB_Collection {
 
         $table_rel = self::get_product_collections_table_name();
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         $result = $wpdb->delete(
             $table_rel,
             array(
@@ -559,6 +699,7 @@ class VPB_Collection {
 
         $table_rel = self::get_product_collections_table_name();
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         $result = $wpdb->delete(
             $table_rel,
             array( 'collection_id' => $collection_id ),
@@ -579,12 +720,14 @@ class VPB_Collection {
 
         $table_rel = self::get_product_collections_table_name();
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         return $wpdb->get_col(
             $wpdb->prepare(
                 "SELECT product_id FROM {$table_rel} WHERE collection_id = %d",
                 $collection_id
             )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     }
 
     // ========================================

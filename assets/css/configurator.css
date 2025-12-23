@@ -8,7 +8,7 @@
     --vpb-warning: #ffc107;
     --vpb-danger: #dc3545;
     --vpb-text: #333;
-    --vpb-text-muted: #999;
+    --vpb-text-muted: #666; /* WCAG AA: 5.7:1 contrast ratio on #fafafa */
     --vpb-border: #e0e0e0;
     --vpb-bg: #fafafa;
 }
@@ -218,6 +218,33 @@
     border-color: var(--vpb-primary);
 }
 
+/* Collection filter dropdown */
+.vpb-collection-filter {
+    margin-bottom: 10px;
+}
+
+.vpb-collection-dropdown {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid var(--vpb-border);
+    border-radius: 6px;
+    background-color: var(--vpb-bg);
+    color: var(--vpb-text);
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vpb-collection-dropdown:hover {
+    border-color: var(--vpb-primary);
+}
+
+.vpb-collection-dropdown:focus {
+    outline: none;
+    border-color: var(--vpb-primary);
+    box-shadow: 0 0 0 3px rgba(79, 158, 217, 0.15);
+}
+
 /* Elements */
 .vpb-elements-container {
     max-height: 150px;
@@ -284,6 +311,29 @@
 .vpb-add-to-cart:disabled {
     background: #ccc;
     cursor: not-allowed;
+}
+
+.vpb-add-to-cart.vpb-loading {
+    background: var(--vpb-primary);
+    opacity: 0.8;
+    cursor: wait;
+}
+
+/* Loading spinner */
+.vpb-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: vpb-spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+@keyframes vpb-spin {
+    to { transform: rotate(360deg); }
 }
 
 /* Toast */
@@ -382,4 +432,40 @@
         width: 24px;
         height: 24px;
     }
+}
+
+/* Branding (FREE tier) */
+.vpb-branding {
+    text-align: center;
+    padding: 8px 0;
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.vpb-branding a {
+    color: var(--vpb-text-muted);
+    text-decoration: none;
+}
+
+.vpb-branding a:hover {
+    text-decoration: underline;
+}
+
+/* Accessibility: Focus visible for keyboard navigation */
+.vpb-element-btn:focus-visible,
+.vpb-btn-icon:focus-visible,
+.vpb-collection-tab:focus-visible {
+    outline: 2px solid var(--vpb-primary);
+    outline-offset: 2px;
+}
+
+.vpb-add-to-cart:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -4px;
+    box-shadow: 0 0 0 3px var(--vpb-primary);
+}
+
+.vpb-confirm-dialog button:focus-visible {
+    outline: 2px solid var(--vpb-primary);
+    outline-offset: 2px;
 }

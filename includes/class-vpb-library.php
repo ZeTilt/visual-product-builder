@@ -30,6 +30,7 @@ class VPB_Library {
         global $wpdb;
 
         $table = $wpdb->prefix . 'vpb_elements';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is safe, constructed from $wpdb->prefix.
         $sql   = "SELECT * FROM $table WHERE active = 1";
 
         if ( ! empty( $category ) ) {
@@ -38,7 +39,8 @@ class VPB_Library {
 
         $sql .= ' ORDER BY category ASC, name ASC, color ASC';
 
-        return $wpdb->get_results( $sql, ARRAY_A );
+        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- SQL is built safely with table prefix and prepare().
+		return $wpdb->get_results( $sql, ARRAY_A );
     }
 
     /**
@@ -52,10 +54,12 @@ class VPB_Library {
 
         $table = $wpdb->prefix . 'vpb_elements';
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         return $wpdb->get_row(
             $wpdb->prepare( "SELECT * FROM $table WHERE id = %d", $id ),
             ARRAY_A
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
     }
 
     /**
@@ -88,9 +92,8 @@ class VPB_Library {
 
         $table = $wpdb->prefix . 'vpb_elements';
 
-        $colors = $wpdb->get_col(
-            "SELECT DISTINCT color FROM $table WHERE active = 1 ORDER BY color ASC"
-        );
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
+        $colors = $wpdb->get_col( "SELECT DISTINCT color FROM $table WHERE active = 1 ORDER BY color ASC" );
 
         return $colors ?: array();
     }
@@ -106,6 +109,7 @@ class VPB_Library {
 
         $table = $wpdb->prefix . 'vpb_elements';
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         return $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT color, price, svg_file FROM $table WHERE slug = %s AND active = 1 ORDER BY color ASC",
@@ -113,15 +117,95 @@ class VPB_Library {
             ),
             ARRAY_A
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+    }
+
+    /**
+     * Check if user can add more elements to a collection based on plan limits
+     *
+     * @param int|null $collection_id Collection ID (null for no collection).
+     * @return array Array with 'allowed' (bool) and 'message' (string).
+     */
+    public static function can_add_element( $collection_id = null ) {
+        $limits = vpb_get_plan_limits();
+        $max_elements = $limits['elements_per_collection'];
+
+        // -1 means unlimited
+        if ( $max_elements === -1 ) {
+            return array(
+                'allowed' => true,
+                'message' => '',
+            );
+        }
+
+        // Count elements in the collection
+        $current_count = self::get_element_count_in_collection( $collection_id );
+
+        if ( $current_count >= $max_elements ) {
+            $plan = vpb_get_plan_name();
+            $upgrade_url = VPB_PRICING_URL;
+
+            return array(
+                'allowed' => false,
+                'current' => $current_count,
+                'max'     => $max_elements,
+                'message' => sprintf(
+                    /* translators: 1: current count, 2: max elements, 3: plan name, 4: upgrade URL */
+                    __( 'You have reached the limit of %1$d/%2$d elements per collection for your %3$s plan. <a href="%4$s">Upgrade to add more</a>.', 'visual-product-builder' ),
+                    $current_count,
+                    $max_elements,
+                    strtoupper( $plan ),
+                    esc_url( $upgrade_url )
+                ),
+            );
+        }
+
+        return array(
+            'allowed' => true,
+            'current' => $current_count,
+            'max'     => $max_elements,
+            'message' => '',
+        );
+    }
+
+    /**
+     * Get element count in a specific collection
+     *
+     * @param int|null $collection_id Collection ID (null for elements without collection).
+     * @return int
+     */
+    public static function get_element_count_in_collection( $collection_id = null ) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'vpb_elements';
+
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
+        if ( null === $collection_id || '' === $collection_id ) {
+            $result = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE collection_id IS NULL" );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+            return $result;
+        }
+
+        $result = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE collection_id = %d", $collection_id )
+        );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $result;
     }
 
     /**
      * Add new element
      *
      * @param array $data Element data.
-     * @return int|false
+     * @return int|false|WP_Error Insert ID, false on failure, or WP_Error if limit reached.
      */
     public static function add_element( $data ) {
+        // Check plan limits
+        $collection_id = isset( $data['collection_id'] ) ? $data['collection_id'] : null;
+        $can_add = self::can_add_element( $collection_id );
+        if ( ! $can_add['allowed'] ) {
+            return new WP_Error( 'limit_reached', $can_add['message'] );
+        }
+
         global $wpdb;
 
         $table    = $wpdb->prefix . 'vpb_elements';
@@ -158,6 +242,7 @@ class VPB_Library {
             $insert_data['collection_id'] = absint( $data['collection_id'] );
         }
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Custom table requires direct query.
         $result = $wpdb->insert( $table, $insert_data );
 
         return $result ? $wpdb->insert_id : false;
@@ -212,6 +297,7 @@ class VPB_Library {
             return false;
         }
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         return $wpdb->update( $table, $update_data, array( 'id' => $id ) ) !== false;
     }
 
@@ -226,6 +312,7 @@ class VPB_Library {
 
         $table = $wpdb->prefix . 'vpb_elements';
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         return $wpdb->delete( $table, array( 'id' => $id ) ) !== false;
     }
 
@@ -235,7 +322,7 @@ class VPB_Library {
     public function ajax_get_elements() {
         check_ajax_referer( 'vpb_nonce', 'nonce' );
 
-        $category = isset( $_GET['category'] ) ? sanitize_key( $_GET['category'] ) : '';
+        $category = isset( $_GET['category'] ) ? sanitize_key( wp_unslash( $_GET['category'] ) ) : '';
         $elements = self::get_elements_grouped();
 
         wp_send_json_success( $elements );

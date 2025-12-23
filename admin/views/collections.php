@@ -33,8 +33,14 @@ defined( 'ABSPATH' ) || exit;
                             <span class="dashicons dashicons-portfolio"></span>
                         <?php endif; ?>
                     </div>
+                    <?php $is_sample = ! empty( $collection->is_sample ); ?>
                     <div class="vpb-collection-card-body">
-                        <h3><?php echo esc_html( $collection->name ); ?></h3>
+                        <h3>
+                            <?php echo esc_html( $collection->name ); ?>
+                            <?php if ( $is_sample ) : ?>
+                                <span class="vpb-badge vpb-badge-sample"><?php esc_html_e( 'Sample', 'visual-product-builder' ); ?></span>
+                            <?php endif; ?>
+                        </h3>
                         <p class="vpb-collection-meta">
                             <span class="vpb-badge">
                                 <?php
@@ -252,6 +258,13 @@ defined( 'ABSPATH' ) || exit;
 .vpb-badge-inactive {
     background: #fef7f1;
     color: #9a6700;
+}
+
+.vpb-badge-sample {
+    background: #e8f4f8;
+    color: #0077b6;
+    font-size: 10px;
+    vertical-align: middle;
 }
 
 .vpb-collection-description {
@@ -711,7 +724,11 @@ jQuery(document).ready(function($) {
             return;
         }
 
-        var btn = $(this);
+        doPurge(false);
+    });
+
+    function doPurge(force) {
+        var btn = $('#vpb-purge-collections');
         btn.prop('disabled', true).text(vpbAdmin.i18n.deleting);
 
         $.ajax({
@@ -719,11 +736,26 @@ jQuery(document).ready(function($) {
             type: 'POST',
             data: {
                 action: 'vpb_purge_collections',
-                nonce: vpbAdmin.nonce
+                nonce: vpbAdmin.nonce,
+                force: force ? 'true' : 'false'
             },
             success: function(response) {
                 if (response.success) {
                     location.reload();
+                } else if (response.data && response.data.requires_force) {
+                    // Pending orders detected - require typing "PURGE" to confirm
+                    var userInput = prompt(
+                        response.data.message + '\n\n' +
+                        vpbAdmin.i18n.forcePurgeConfirm
+                    );
+                    if (userInput === 'PURGE') {
+                        doPurge(true);
+                    } else {
+                        btn.prop('disabled', false).text(vpbAdmin.i18n.purgeAll);
+                        if (userInput !== null) {
+                            alert(vpbAdmin.i18n.purgeAborted);
+                        }
+                    }
                 } else {
                     alert(response.data.message || vpbAdmin.i18n.error);
                     btn.prop('disabled', false).text(vpbAdmin.i18n.purgeAll);
@@ -734,7 +766,7 @@ jQuery(document).ready(function($) {
                 btn.prop('disabled', false).text(vpbAdmin.i18n.purgeAll);
             }
         });
-    });
+    }
 
     // Thumbnail upload
     $('#vpb-collection-thumbnail-btn').on('click', function(e) {

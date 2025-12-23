@@ -12,8 +12,17 @@
         basePrice: 0,
         limit: 10,
         productId: 0,
-        dragIndex: null
+        dragIndex: null,
+        editCartKey: null // Cart item key when editing from cart
     };
+
+    /**
+     * Detect if device is touch-enabled
+     * Drag & drop doesn't work reliably on touch devices
+     */
+    function isTouchDevice() {
+        return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    }
 
     // DOM Elements
     let container, preview, undoBtn, resetBtn, addToCartBtn;
@@ -23,7 +32,7 @@
     /**
      * Initialize configurator
      */
-    function init() {
+    async function init() {
         container = document.querySelector('.vpb-configurator');
         if (!container) return;
 
@@ -31,6 +40,9 @@
         state.productId = parseInt(container.dataset.productId) || 0;
         state.limit = parseInt(container.dataset.limit) || 10;
         state.basePrice = parseFloat(container.dataset.basePrice) || 0;
+        state.editCartKey = container.dataset.editCartKey || null;
+
+        console.log('[VPB] Init - productId:', state.productId, 'editCartKey:', state.editCartKey);
 
         // Cache DOM elements
         preview = document.getElementById('vpb-preview');
@@ -43,17 +55,25 @@
         configInput = document.getElementById('vpb-configuration-input');
         imageInput = document.getElementById('vpb-image-input');
 
-        // Load saved state from localStorage
-        loadFromStorage();
+        // Load saved state: from cart if editing, otherwise from localStorage
+        // IMPORTANT: await to ensure data is loaded before render()
+        if (state.editCartKey) {
+            await loadFromCart(state.editCartKey);
+        } else {
+            loadFromStorage();
+        }
 
         // Bind events
         bindEvents();
 
-        // Initial render
+        // Initial render (after data is loaded)
         render();
 
         // Add entrance animation to elements grid
         animateElementsEntrance();
+
+        // Check if we just added to cart (show success message after redirect)
+        checkPostAddToCart();
     }
 
     /**
@@ -70,10 +90,16 @@
             tab.addEventListener('click', () => switchTab(tab));
         });
 
-        // Collection filter switching
+        // Collection filter switching (tabs)
         container.querySelectorAll('.vpb-collection-tab').forEach(tab => {
             tab.addEventListener('click', () => filterByCollection(tab));
         });
+
+        // Collection filter switching (dropdown)
+        const collectionDropdown = document.getElementById('vpb-collection-select');
+        if (collectionDropdown) {
+            collectionDropdown.addEventListener('change', () => filterByCollectionDropdown(collectionDropdown));
+        }
 
         // Controls
         undoBtn.addEventListener('click', undoLast);
@@ -323,6 +349,37 @@
     }
 
     /**
+     * Filter elements by collection (dropdown version)
+     */
+    function filterByCollectionDropdown(dropdown) {
+        const collection = dropdown.value;
+
+        // Show/hide elements with staggered animation
+        let visibleIndex = 0;
+        container.querySelectorAll('.vpb-element-btn').forEach(btn => {
+            const matches = collection === 'all' || btn.dataset.collection === collection;
+
+            if (matches) {
+                btn.classList.remove('hidden');
+                btn.style.opacity = '0';
+                btn.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    btn.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    btn.style.opacity = '1';
+                    btn.style.transform = 'scale(1)';
+                }, visibleIndex * 30);
+                visibleIndex++;
+            } else {
+                btn.style.opacity = '0';
+                btn.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    btn.classList.add('hidden');
+                }, 200);
+            }
+        });
+    }
+
+    /**
      * Render the preview and update UI
      */
     function render() {
@@ -363,22 +420,32 @@
             div.style.opacity = '0';
             div.setAttribute('data-is-svg', element.isSvg ? 'true' : 'false');
             div.setAttribute('data-index', index);
-            div.draggable = true;
+
+            // Drag & drop is a PRO feature (disabled on touch devices)
+            const canDrag = vpbData?.features?.dragDrop === true && !isTouchDevice();
+            div.draggable = canDrag;
 
             // Only apply colored background for SVG elements
             if (element.isSvg) {
                 div.style.backgroundColor = element.colorHex || '#4F9ED9';
             }
 
-            div.innerHTML = `<img src="${element.svg}" alt="${element.name}" draggable="false">`;
+            // Use DOM manipulation instead of innerHTML for security
+            const img = document.createElement('img');
+            img.src = element.svg;
+            img.alt = element.name;
+            img.draggable = false;
+            div.appendChild(img);
 
-            // Drag events
-            div.addEventListener('dragstart', handleDragStart);
-            div.addEventListener('dragend', handleDragEnd);
-            div.addEventListener('dragover', handleDragOver);
-            div.addEventListener('drop', handleDrop);
-            div.addEventListener('dragenter', handleDragEnter);
-            div.addEventListener('dragleave', handleDragLeave);
+            // Drag events (PRO feature only)
+            if (canDrag) {
+                div.addEventListener('dragstart', handleDragStart);
+                div.addEventListener('dragend', handleDragEnd);
+                div.addEventListener('dragover', handleDragOver);
+                div.addEventListener('drop', handleDrop);
+                div.addEventListener('dragenter', handleDragEnter);
+                div.addEventListener('dragleave', handleDragLeave);
+            }
 
             preview.appendChild(div);
 
@@ -393,7 +460,6 @@
      * Handle drag start
      */
     function handleDragStart(e) {
-        console.log('dragstart', e.currentTarget);
         const index = parseInt(e.currentTarget.dataset.index);
         state.dragIndex = index;
         e.currentTarget.classList.add('vpb-dragging');
@@ -567,14 +633,23 @@
      * Handle form submission
      */
     async function handleSubmit(e) {
+        // Always prevent default to handle async image generation
+        e.preventDefault();
+
         if (state.elements.length === 0) {
-            e.preventDefault();
             return;
         }
 
-        // Show loading state
+        // Prevent double submission
+        if (addToCartBtn.classList.contains('vpb-loading')) {
+            return;
+        }
+
+        // Show loading state with visual feedback
         addToCartBtn.classList.add('vpb-loading');
         addToCartBtn.disabled = true;
+        addToCartBtn.innerHTML = '<span class="vpb-spinner"></span> ' + (vpbData?.i18n?.adding || 'Ajout en cours...');
+        addToCartBtn.setAttribute('aria-busy', 'true');
 
         // Generate image before submit
         try {
@@ -585,11 +660,37 @@
             // Continue without image
         }
 
-        // Clear storage after successful add
-        clearStorage();
+        // Store flag to show success message after page reload
+        try {
+            sessionStorage.setItem('vpb_added_to_cart', 'true');
+        } catch (err) {
+            // Ignore storage errors
+        }
 
-        // Success animation
-        showToast('Ajouté au panier !', 'success');
+        // Note: We intentionally do NOT clear storage here.
+        // This allows users to return to the product page and modify their design
+        // or add another item with the same design. Users can use "Reset" to clear.
+
+        // Now submit the form programmatically (after image is ready)
+        const form = document.getElementById('vpb-add-to-cart-form');
+        form.submit();
+    }
+
+    /**
+     * Check for post-add-to-cart redirect and show success message
+     */
+    function checkPostAddToCart() {
+        try {
+            if (sessionStorage.getItem('vpb_added_to_cart') === 'true') {
+                sessionStorage.removeItem('vpb_added_to_cart');
+                // Small delay to ensure page is fully loaded
+                setTimeout(() => {
+                    showToast(vpbData?.i18n?.addedToCart || 'Ajouté au panier !', 'success');
+                }, 300);
+            }
+        } catch (err) {
+            // Ignore storage errors
+        }
     }
 
     /**
@@ -600,11 +701,25 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
+            // Filter elements with valid SVG URLs
+            const validElements = state.elements.filter(el => {
+                if (!el.svg) {
+                    console.warn('Element missing svg:', el);
+                    return false;
+                }
+                return true;
+            });
+
+            if (validElements.length === 0) {
+                reject(new Error('No valid elements to render'));
+                return;
+            }
+
             // Set canvas size
             const elementWidth = 60;
             const padding = 30;
             const gap = 5;
-            const width = (state.elements.length * (elementWidth + gap)) + (padding * 2);
+            const width = (validElements.length * (elementWidth + gap)) + (padding * 2);
             const height = elementWidth + (padding * 2);
 
             canvas.width = Math.min(width, 1200);
@@ -618,17 +733,28 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Load and draw each element
-            const loadPromises = state.elements.map((element, index) => {
+            const loadPromises = validElements.map((element, index) => {
                 return new Promise((resolveImg) => {
                     const img = new Image();
-                    img.crossOrigin = 'anonymous';
+                    // Only set crossOrigin for external URLs to avoid CORS issues with same-origin
+                    try {
+                        const imgUrl = new URL(element.svg, window.location.origin);
+                        if (imgUrl.origin !== window.location.origin) {
+                            img.crossOrigin = 'anonymous';
+                        }
+                    } catch (e) {
+                        // If URL parsing fails, don't set crossOrigin
+                    }
                     img.onload = () => {
                         const x = padding + (index * (elementWidth + gap));
                         const y = padding;
                         ctx.drawImage(img, x, y, elementWidth, elementWidth);
                         resolveImg();
                     };
-                    img.onerror = () => resolveImg();
+                    img.onerror = (err) => {
+                        console.warn('Failed to load image:', element.svg, err);
+                        resolveImg(); // Continue anyway
+                    };
                     img.src = element.svg;
                 });
             });
@@ -670,15 +796,31 @@
     function showConfirm(message, onConfirm) {
         const overlay = document.createElement('div');
         overlay.className = 'vpb-confirm-overlay';
-        overlay.innerHTML = `
-            <div class="vpb-confirm-dialog">
-                <p>${message}</p>
-                <div class="vpb-confirm-actions">
-                    <button type="button" class="vpb-btn vpb-btn-secondary vpb-confirm-cancel">Annuler</button>
-                    <button type="button" class="vpb-btn vpb-btn-primary vpb-confirm-ok">Confirmer</button>
-                </div>
-            </div>
-        `;
+        // Use DOM manipulation instead of innerHTML for security
+        const dialog = document.createElement('div');
+        dialog.className = 'vpb-confirm-dialog';
+
+        const p = document.createElement('p');
+        p.textContent = message;
+        dialog.appendChild(p);
+
+        const actions = document.createElement('div');
+        actions.className = 'vpb-confirm-actions';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.className = 'vpb-btn vpb-btn-secondary vpb-confirm-cancel';
+        cancelBtn.textContent = vpbData?.i18n?.cancel || 'Annuler';
+        actions.appendChild(cancelBtn);
+
+        const okBtn = document.createElement('button');
+        okBtn.type = 'button';
+        okBtn.className = 'vpb-btn vpb-btn-primary vpb-confirm-ok';
+        okBtn.textContent = vpbData?.i18n?.confirm || 'Confirmer';
+        actions.appendChild(okBtn);
+
+        dialog.appendChild(actions);
+        overlay.appendChild(dialog);
 
         document.body.appendChild(overlay);
 
@@ -743,6 +885,42 @@
             }
         } catch (e) {
             console.warn('Failed to load from localStorage:', e);
+        }
+    }
+
+    /**
+     * Load configuration from cart item
+     * Returns a Promise so init() can await it
+     */
+    async function loadFromCart(cartItemKey) {
+        console.log('[VPB] Loading from cart, key:', cartItemKey);
+
+        if (!vpbData || !vpbData.ajaxUrl) {
+            console.warn('[VPB] AJAX URL not available');
+            loadFromStorage();
+            return;
+        }
+
+        try {
+            const url = vpbData.ajaxUrl + '?action=vpb_get_cart_config&cart_item_key=' + encodeURIComponent(cartItemKey);
+            console.log('[VPB] Fetching:', url);
+
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log('[VPB] Response:', data);
+
+            if (data.success && data.data && data.data.elements) {
+                state.elements = data.data.elements;
+                console.log('[VPB] Loaded', state.elements.length, 'elements from cart');
+                // Don't call render() here - init() will do it after await
+                showToast(vpbData.i18n?.loadedFromCart || 'Design loaded from cart');
+            } else {
+                console.warn('[VPB] Cart item not found or no elements, falling back to localStorage');
+                loadFromStorage();
+            }
+        } catch (error) {
+            console.error('[VPB] Failed to load from cart:', error);
+            loadFromStorage();
         }
     }
 

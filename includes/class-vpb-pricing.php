@@ -63,9 +63,16 @@ class VPB_Pricing {
     /**
      * Calculate total price for elements
      *
-     * SECURITY: Fetches prices from database, not from submitted data.
+     * PRICING STRATEGY: Uses frozen prices from cart data.
      *
-     * @param array $elements Elements from cart.
+     * The price was validated and frozen at add-to-cart time (see VPB_Cart::add_cart_item_data).
+     * This prevents race conditions where admin changes price between cart and checkout.
+     * The customer accepted the price shown at add-to-cart, so that's what they pay.
+     *
+     * We still validate that elements exist (in case they were deleted), but we use
+     * the frozen price, not the current database price.
+     *
+     * @param array $elements Elements from cart (with frozen prices).
      * @return float
      */
     private function calculate_elements_price( $elements ) {
@@ -76,11 +83,25 @@ class VPB_Pricing {
                 continue;
             }
 
-            // Fetch current price from database
+            // Validate element still exists (but don't use its current price)
             $db_element = VPB_Library::get_element( absint( $element['id'] ) );
 
-            if ( $db_element && $db_element['active'] ) {
-                $total += floatval( $db_element['price'] );
+            if ( ! $db_element ) {
+                // Element was deleted - log warning but honor the frozen price
+                if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug logging for troubleshooting.
+                    error_log( sprintf(
+                        '[VPB] Warning: Element ID %d in cart no longer exists. Using frozen price %.2f',
+                        $element['id'],
+                        isset( $element['price'] ) ? $element['price'] : 0
+                    ) );
+                }
+            }
+
+            // Use frozen price from cart data (set at add-to-cart time)
+            // This prevents race condition if admin changes prices after customer added to cart
+            if ( isset( $element['price'] ) ) {
+                $total += floatval( $element['price'] );
             }
         }
 

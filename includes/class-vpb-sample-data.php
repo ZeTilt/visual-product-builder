@@ -43,6 +43,7 @@ class VPB_Sample_Data {
                 'slug'        => $color_slug,
                 'description' => 'Lettres, chiffres et symboles en ' . strtolower( $color_name ),
                 'color_hex'   => $color_hex,
+                'is_sample'   => 1, // Mark as sample collection
                 'sort_order'  => $index,
                 'active'      => 1,
             );
@@ -178,13 +179,15 @@ class VPB_Sample_Data {
 
             // Check if element already exists (same slug)
             global $wpdb;
-            $table    = $wpdb->prefix . 'vpb_elements';
+            $table = $wpdb->prefix . 'vpb_elements';
+            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
             $existing = $wpdb->get_var(
                 $wpdb->prepare(
                     "SELECT id FROM $table WHERE slug = %s",
                     $element['slug']
                 )
             );
+            // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
             if ( $existing ) {
                 continue; // Skip if already exists
@@ -225,6 +228,7 @@ class VPB_Sample_Data {
     public static function is_imported() {
         global $wpdb;
         $table = $wpdb->prefix . 'vpb_elements';
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Table name from $wpdb->prefix is safe; custom table.
         $count = $wpdb->get_var( "SELECT COUNT(*) FROM $table" );
         return $count > 0;
     }
@@ -237,6 +241,8 @@ class VPB_Sample_Data {
     public static function clear() {
         global $wpdb;
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table names are safe, constructed from $wpdb->prefix. TRUNCATE cannot use prepare().
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom table requires direct query.
         // Clear elements
         $elements_table = $wpdb->prefix . 'vpb_elements';
         $wpdb->query( "TRUNCATE TABLE $elements_table" );
@@ -248,6 +254,8 @@ class VPB_Sample_Data {
         // Clear product-collection relationships
         $product_collections_table = $wpdb->prefix . 'vpb_product_collections';
         $wpdb->query( "TRUNCATE TABLE $product_collections_table" );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 
         return true;
     }

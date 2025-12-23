@@ -9,6 +9,8 @@ defined( 'ABSPATH' ) || exit;
 
 // Get collections for filter and dropdown
 $collections = VPB_Collection::get_collections();
+$can_bulk_operations = vpb_can_use_feature( 'bulk_operations' );
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is a read-only filter parameter for admin display.
 $collection_filter = isset( $_GET['collection'] ) ? absint( $_GET['collection'] ) : 0;
 
 // Filter elements if collection is specified
@@ -50,20 +52,24 @@ if ( $collection_filter ) {
                 <?php endif; ?>
             </div>
         <?php else : ?>
-            <!-- Barre d'actions en masse -->
-            <div class="vpb-bulk-actions" style="display: none;">
-                <span class="vpb-selected-count">0 <?php esc_html_e( 'selected', 'visual-product-builder' ); ?></span>
-                <button type="button" class="button" id="vpb-bulk-price"><?php esc_html_e( 'Edit price', 'visual-product-builder' ); ?></button>
-                <button type="button" class="button" id="vpb-bulk-collection"><?php esc_html_e( 'Assign collection', 'visual-product-builder' ); ?></button>
-                <button type="button" class="button" id="vpb-bulk-deselect"><?php esc_html_e( 'Deselect', 'visual-product-builder' ); ?></button>
-            </div>
+            <?php if ( $can_bulk_operations ) : ?>
+                <!-- Barre d'actions en masse (PRO) -->
+                <div class="vpb-bulk-actions" style="display: none;">
+                    <span class="vpb-selected-count">0 <?php esc_html_e( 'selected', 'visual-product-builder' ); ?></span>
+                    <button type="button" class="button" id="vpb-bulk-price"><?php esc_html_e( 'Edit price', 'visual-product-builder' ); ?></button>
+                    <button type="button" class="button" id="vpb-bulk-collection"><?php esc_html_e( 'Assign collection', 'visual-product-builder' ); ?></button>
+                    <button type="button" class="button" id="vpb-bulk-deselect"><?php esc_html_e( 'Deselect', 'visual-product-builder' ); ?></button>
+                </div>
+            <?php endif; ?>
 
             <table class="wp-list-table widefat fixed striped">
                 <thead>
                     <tr>
-                        <th style="width: 40px;">
-                            <input type="checkbox" id="vpb-select-all" title="<?php esc_attr_e( 'Select all', 'visual-product-builder' ); ?>">
-                        </th>
+                        <?php if ( $can_bulk_operations ) : ?>
+                            <th style="width: 40px;">
+                                <input type="checkbox" id="vpb-select-all" title="<?php esc_attr_e( 'Select all', 'visual-product-builder' ); ?>">
+                            </th>
+                        <?php endif; ?>
                         <th style="width: 60px;"><?php esc_html_e( 'Preview', 'visual-product-builder' ); ?></th>
                         <th><?php esc_html_e( 'Name', 'visual-product-builder' ); ?></th>
                         <th><?php esc_html_e( 'Category', 'visual-product-builder' ); ?></th>
@@ -79,18 +85,22 @@ if ( $collection_filter ) {
                         <?php
                         $collection_name = '';
                         $collection_color = '';
+                        $is_sample_element = false;
                         if ( ! empty( $element['collection_id'] ) ) {
                             $el_collection = VPB_Collection::get_collection( $element['collection_id'] );
                             if ( $el_collection ) {
                                 $collection_name = $el_collection->name;
                                 $collection_color = $el_collection->color_hex;
+                                $is_sample_element = ! empty( $el_collection->is_sample );
                             }
                         }
                         ?>
                         <tr data-id="<?php echo esc_attr( $element['id'] ); ?>" data-price="<?php echo esc_attr( $element['price'] ); ?>">
-                            <td>
-                                <input type="checkbox" class="vpb-element-checkbox" value="<?php echo esc_attr( $element['id'] ); ?>">
-                            </td>
+                            <?php if ( $can_bulk_operations ) : ?>
+                                <td>
+                                    <input type="checkbox" class="vpb-element-checkbox" value="<?php echo esc_attr( $element['id'] ); ?>">
+                                </td>
+                            <?php endif; ?>
                             <td>
                                 <div class="vpb-element-preview" style="color: <?php echo esc_attr( $element['color_hex'] ?? '#4F9ED9' ); ?>;">
                                     <img src="<?php echo esc_url( $element['svg_file'] ); ?>"
@@ -104,6 +114,9 @@ if ( $collection_filter ) {
                                 <?php if ( $collection_name ) : ?>
                                     <span class="vpb-collection-badge" style="border-left: 3px solid <?php echo esc_attr( $collection_color ); ?>;">
                                         <?php echo esc_html( $collection_name ); ?>
+                                        <?php if ( $is_sample_element ) : ?>
+                                            <span class="vpb-sample-indicator"><?php esc_html_e( 'Sample', 'visual-product-builder' ); ?></span>
+                                        <?php endif; ?>
                                     </span>
                                 <?php else : ?>
                                     <span class="vpb-no-collection">—</span>
@@ -113,7 +126,7 @@ if ( $collection_filter ) {
                                 <span class="vpb-color-swatch" style="background: <?php echo esc_attr( $element['color_hex'] ?? '#4F9ED9' ); ?>;"></span>
                                 <?php echo esc_html( $element['color'] ?: '—' ); ?>
                             </td>
-                            <td class="vpb-price-cell"><?php echo wc_price( $element['price'] ); ?></td>
+                            <td class="vpb-price-cell"><?php echo wp_kses_post( wc_price( $element['price'] ) ); ?></td>
                             <td>
                                 <?php if ( $element['active'] ) : ?>
                                     <span class="vpb-status vpb-status-active"><?php esc_html_e( 'Active', 'visual-product-builder' ); ?></span>
@@ -180,19 +193,7 @@ if ( $collection_filter ) {
                     </div>
                 </div>
 
-                <div class="vpb-form-row vpb-form-row-2col">
-                    <div>
-                        <label for="vpb-element-color"><?php esc_html_e( 'Color name', 'visual-product-builder' ); ?></label>
-                        <input type="text" id="vpb-element-color" name="color" placeholder="<?php esc_attr_e( 'blue, pink...', 'visual-product-builder' ); ?>">
-                    </div>
-                    <div>
-                        <label for="vpb-element-color-hex"><?php esc_html_e( 'Color (hex)', 'visual-product-builder' ); ?></label>
-                        <div class="vpb-color-picker-wrapper">
-                            <input type="color" id="vpb-element-color-picker" value="#4F9ED9">
-                            <input type="text" id="vpb-element-color-hex" name="color_hex" value="#4F9ED9" maxlength="7">
-                        </div>
-                    </div>
-                </div>
+                <!-- Color fields removed - color is inherited from collection -->
 
                 <div class="vpb-form-row">
                     <label for="vpb-element-svg"><?php esc_html_e( 'Image *', 'visual-product-builder' ); ?></label>
@@ -230,64 +231,66 @@ if ( $collection_filter ) {
     </div>
 </div>
 
-<!-- Modal Prix en masse -->
-<div id="vpb-bulk-price-modal" class="vpb-modal" style="display: none;">
-    <div class="vpb-modal-content" style="width: 400px;">
-        <div class="vpb-modal-header">
-            <h2><?php esc_html_e( 'Edit price', 'visual-product-builder' ); ?></h2>
-            <button type="button" class="vpb-modal-close">&times;</button>
-        </div>
-        <div class="vpb-modal-body">
-            <form id="vpb-bulk-price-form">
-                <p class="vpb-bulk-info"></p>
-                <div class="vpb-form-row">
-                    <label><input type="radio" name="price_mode" value="set" checked> <?php esc_html_e( 'Set to', 'visual-product-builder' ); ?></label>
-                    <div class="vpb-price-input-row">
-                        <input type="number" id="vpb-bulk-price-value" step="0.01" min="0" value="0"> <?php echo esc_html( get_woocommerce_currency_symbol() ); ?>
+<?php if ( $can_bulk_operations ) : ?>
+    <!-- Modal Prix en masse (PRO) -->
+    <div id="vpb-bulk-price-modal" class="vpb-modal" style="display: none;">
+        <div class="vpb-modal-content" style="width: 400px;">
+            <div class="vpb-modal-header">
+                <h2><?php esc_html_e( 'Edit price', 'visual-product-builder' ); ?></h2>
+                <button type="button" class="vpb-modal-close">&times;</button>
+            </div>
+            <div class="vpb-modal-body">
+                <form id="vpb-bulk-price-form">
+                    <p class="vpb-bulk-info"></p>
+                    <div class="vpb-form-row">
+                        <label><input type="radio" name="price_mode" value="set" checked> <?php esc_html_e( 'Set to', 'visual-product-builder' ); ?></label>
+                        <div class="vpb-price-input-row">
+                            <input type="number" id="vpb-bulk-price-value" step="0.01" min="0" value="0"> <?php echo esc_html( get_woocommerce_currency_symbol() ); ?>
+                        </div>
                     </div>
-                </div>
-                <div class="vpb-form-row">
-                    <label><input type="radio" name="price_mode" value="add"> <?php esc_html_e( 'Add', 'visual-product-builder' ); ?></label>
-                </div>
-                <div class="vpb-form-row">
-                    <label><input type="radio" name="price_mode" value="subtract"> <?php esc_html_e( 'Subtract', 'visual-product-builder' ); ?></label>
-                </div>
-            </form>
-        </div>
-        <div class="vpb-modal-footer">
-            <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
-            <button type="button" class="button button-primary" id="vpb-apply-bulk-price"><?php esc_html_e( 'Apply', 'visual-product-builder' ); ?></button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Collection en masse -->
-<div id="vpb-bulk-collection-modal" class="vpb-modal" style="display: none;">
-    <div class="vpb-modal-content" style="width: 400px;">
-        <div class="vpb-modal-header">
-            <h2><?php esc_html_e( 'Assign to collection', 'visual-product-builder' ); ?></h2>
-            <button type="button" class="vpb-modal-close">&times;</button>
-        </div>
-        <div class="vpb-modal-body">
-            <p class="vpb-bulk-info"></p>
-            <div class="vpb-form-row">
-                <label for="vpb-bulk-collection-select"><?php esc_html_e( 'Collection', 'visual-product-builder' ); ?></label>
-                <select id="vpb-bulk-collection-select">
-                    <option value=""><?php esc_html_e( '-- Remove from all collections --', 'visual-product-builder' ); ?></option>
-                    <?php foreach ( $collections as $col ) : ?>
-                        <option value="<?php echo esc_attr( $col->id ); ?>">
-                            <?php echo esc_html( $col->name ); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
+                    <div class="vpb-form-row">
+                        <label><input type="radio" name="price_mode" value="add"> <?php esc_html_e( 'Add', 'visual-product-builder' ); ?></label>
+                    </div>
+                    <div class="vpb-form-row">
+                        <label><input type="radio" name="price_mode" value="subtract"> <?php esc_html_e( 'Subtract', 'visual-product-builder' ); ?></label>
+                    </div>
+                </form>
+            </div>
+            <div class="vpb-modal-footer">
+                <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
+                <button type="button" class="button button-primary" id="vpb-apply-bulk-price"><?php esc_html_e( 'Apply', 'visual-product-builder' ); ?></button>
             </div>
         </div>
-        <div class="vpb-modal-footer">
-            <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
-            <button type="button" class="button button-primary" id="vpb-apply-bulk-collection"><?php esc_html_e( 'Apply', 'visual-product-builder' ); ?></button>
+    </div>
+
+    <!-- Modal Collection en masse (PRO) -->
+    <div id="vpb-bulk-collection-modal" class="vpb-modal" style="display: none;">
+        <div class="vpb-modal-content" style="width: 400px;">
+            <div class="vpb-modal-header">
+                <h2><?php esc_html_e( 'Assign to collection', 'visual-product-builder' ); ?></h2>
+                <button type="button" class="vpb-modal-close">&times;</button>
+            </div>
+            <div class="vpb-modal-body">
+                <p class="vpb-bulk-info"></p>
+                <div class="vpb-form-row">
+                    <label for="vpb-bulk-collection-select"><?php esc_html_e( 'Collection', 'visual-product-builder' ); ?></label>
+                    <select id="vpb-bulk-collection-select">
+                        <option value=""><?php esc_html_e( '-- Remove from all collections --', 'visual-product-builder' ); ?></option>
+                        <?php foreach ( $collections as $col ) : ?>
+                            <option value="<?php echo esc_attr( $col->id ); ?>">
+                                <?php echo esc_html( $col->name ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="vpb-modal-footer">
+                <button type="button" class="button vpb-modal-close"><?php esc_html_e( 'Cancel', 'visual-product-builder' ); ?></button>
+                <button type="button" class="button button-primary" id="vpb-apply-bulk-collection"><?php esc_html_e( 'Apply', 'visual-product-builder' ); ?></button>
+            </div>
         </div>
     </div>
-</div>
+<?php endif; ?>
 
 <style>
 .vpb-filters {
@@ -327,6 +330,19 @@ if ( $collection_filter ) {
 }
 .vpb-no-collection {
     color: #999;
+}
+.vpb-sample-indicator {
+    background: #e8f4f8;
+    color: #0077b6;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-left: 5px;
+}
+.vpb-sample-readonly {
+    color: #666;
+    font-style: italic;
+    font-size: 12px;
 }
 
 .vpb-color-swatch {
@@ -492,16 +508,6 @@ jQuery(document).ready(function($) {
         window.location.href = url;
     });
 
-    // Sync color picker
-    $('#vpb-element-color-picker').on('input', function() {
-        $('#vpb-element-color-hex').val($(this).val());
-    });
-    $('#vpb-element-color-hex').on('input', function() {
-        var val = $(this).val();
-        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
-            $('#vpb-element-color-picker').val(val);
-        }
-    });
 
     // Modal functions
     function openModal(modalId) {
@@ -522,8 +528,6 @@ jQuery(document).ready(function($) {
         $('#vpb-element-id').val(0);
         $('#vpb-modal-title').text(vpbAdmin.i18n.addElement || 'Add Element');
         $('#vpb-svg-preview').empty();
-        $('#vpb-element-color-picker').val('#4F9ED9');
-        $('#vpb-element-color-hex').val('#4F9ED9');
         openModal('#vpb-element-modal');
     });
 
@@ -545,9 +549,6 @@ jQuery(document).ready(function($) {
                     $('#vpb-element-slug').val(el.slug);
                     $('#vpb-element-category').val(el.category);
                     $('#vpb-element-collection').val(el.collection_id || '');
-                    $('#vpb-element-color').val(el.color);
-                    $('#vpb-element-color-hex').val(el.color_hex || '#4F9ED9');
-                    $('#vpb-element-color-picker').val(el.color_hex || '#4F9ED9');
                     $('#vpb-element-svg').val(el.svg_file);
                     $('#vpb-element-price').val(el.price);
                     $('#vpb-element-order').val(el.sort_order);
@@ -580,8 +581,6 @@ jQuery(document).ready(function($) {
                 slug: $('#vpb-element-slug').val(),
                 category: $('#vpb-element-category').val(),
                 collection_id: $('#vpb-element-collection').val(),
-                color: $('#vpb-element-color').val(),
-                color_hex: $('#vpb-element-color-hex').val(),
                 svg_file: $('#vpb-element-svg').val(),
                 price: $('#vpb-element-price').val(),
                 sort_order: $('#vpb-element-order').val(),
